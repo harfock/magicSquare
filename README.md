@@ -1,0 +1,2 @@
+# magicSquare
+Train brain power 
