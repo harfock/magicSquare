@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>形狀、心算與色彩都市建築師 — 榮譽勳章存檔版</title>
+    <title>形狀、心算與色彩都市建築師 — 平板適應優化版</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
@@ -17,43 +17,51 @@
             color: #FFFFFF; 
             display: flex; 
             flex-direction: column; 
-            height: 100vh; 
-            overflow: hidden; 
+            min-height: 100vh; 
+            overflow-y: auto; /* 👑 允許螢幕滾動，防止內容被切掉 */
         }
 
-        /* 頂部題目欄 */
+        /* 👑 頂部題目欄：全面壓縮為單一橫列 (One Row) */
         #target-bar { 
             position: relative;
             z-index: 50; 
-            padding: 15px 15px 5px 15px; 
-            text-align: center; 
+            padding: 10px 24px; 
+            background: rgba(15, 23, 42, 0.6);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
             flex-shrink: 0;
         }
 
-        #target-bar h1 { 
-            font-size: 32px; 
+        #game-instruction { 
+            font-size: 22px; 
             font-weight: 900; 
-            margin-bottom: 8px; 
-            text-shadow: 0 4px 12px rgba(0,0,0,0.8);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+            white-space: nowrap;
+            flex: 1;
         }
 
         #target-display { 
-            width: 95px;
-            height: 95px; 
-            margin: 0 auto; 
-            background: rgba(0, 0, 0, 0.65); 
-            padding: 12px; 
-            border-radius: 20px; 
-            box-shadow: inset 0 4px 10px rgba(0,0,0,0.8);
+            width: 65px;
+            height: 65px; 
+            background: rgba(0, 0, 0, 0.75); 
+            padding: 8px; 
+            border-radius: 14px; 
+            box-shadow: inset 0 3px 8px rgba(0,0,0,0.8);
             border: 2px solid rgba(255,255,255,0.25);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 36px;
+            font-size: 28px;
             font-weight: 900;
             color: #FCD34D;
-            text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
-            overflow: hidden; 
+            text-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+            overflow: hidden;
+            flex-shrink: 0;
         }
 
         #target-display svg {
@@ -63,45 +71,54 @@
         }
 
         .color-target-preview {
-            width: 65px;
-            height: 65px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
-            border: 3px solid #FFFFFF;
-            box-shadow: 0 6px 14px rgba(0,0,0,0.6), inset 0 2px 8px rgba(255,255,255,0.5);
+            border: 2px solid #FFFFFF;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
         }
 
         #dashboard {
             display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 10px;
-            font-size: 18px;
-            font-weight: bold;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
         }
-        .stat-box { background: rgba(15, 23, 42, 0.75); padding: 4px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
-        .evolution-status { color: #FCD34D; font-weight: 900; background: rgba(30, 27, 75, 0.85) !important; border-color: #FBBF24 !important;}
+        .stat-box { 
+            background: rgba(15, 23, 42, 0.85); 
+            padding: 6px 14px; 
+            border-radius: 10px; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+            white-space: nowrap;
+        }
+        .evolution-status { 
+            color: #FCD34D; 
+            font-weight: 900; 
+            background: rgba(30, 27, 75, 0.9) !important; 
+            border-color: #FBBF24 !important;
+        }
 
         /* 主遊戲容器 */
         #main-container { 
             flex: 1; 
             display: flex; 
             justify-content: space-between; 
-            align-items: center; 
-            padding: 10px 40px 20px 40px; 
-            gap: 30px;
-            height: calc(100vh - 180px);
+            align-items: stretch; 
+            padding: 15px 24px; 
+            gap: 20px;
             min-height: 0; 
         }
 
         /* 左側操作區 */
         #play-area { 
             display: grid; 
-            width: 48%; 
-            height: 100%;
+            width: 49%; 
             background: rgba(15, 23, 42, 0.45);
-            padding: 20px;
-            border-radius: 32px;
+            padding: 16px;
+            border-radius: 24px;
             border: 2px solid rgba(255,255,255,0.08);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
@@ -111,35 +128,35 @@
         .grid-shape-mode { 
             grid-template-columns: repeat(4, 1fr); 
             grid-template-rows: repeat(3, 1fr); 
-            gap: 16px; 
+            gap: 12px; 
         }
         
         .grid-math-mode { 
             grid-template-columns: repeat(3, 1fr); 
             grid-template-rows: repeat(4, 1fr); 
-            gap: 12px; 
+            gap: 10px; 
         }
 
         .grid-color-mode {
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(4, 1fr);
-            gap: 14px;
+            gap: 10px;
         }
 
         .shape-box, .num-btn { 
             width: 100%; 
             height: 100%; 
-            padding: 10px; 
+            padding: 8px; 
             background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95)); 
-            border-radius: 20px; 
+            border-radius: 16px; 
             cursor: pointer; 
             transition: all 0.15s; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             border: 2px solid rgba(255, 255, 255, 0.08); 
-            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-            font-size: 38px; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            font-size: 32px; 
             font-weight: 900; 
             color: #FFFFFF;
             user-select: none;
@@ -150,69 +167,64 @@
         .color-btn {
             width: 100%;
             height: 100%;
-            border-radius: 22px;
+            border-radius: 16px;
             cursor: pointer;
             transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 3px solid rgba(255, 255, 255, 0.8);
+            border: 2.5px solid rgba(255, 255, 255, 0.8);
             box-shadow: 
-                0 8px 16px rgba(0,0,0,0.5), 
-                inset 0 4px 8px rgba(255,255,255,0.6), 
-                inset 0 -6px 12px rgba(0,0,0,0.3);
+                0 6px 12px rgba(0,0,0,0.4), 
+                inset 0 3px 6px rgba(255,255,255,0.5), 
+                inset 0 -4px 8px rgba(0,0,0,0.3);
             user-select: none;
         }
         .color-btn:hover {
-            transform: scale(1.05);
+            transform: scale(1.04);
             border-color: #FFFFFF;
-            box-shadow: 
-                0 12px 20px rgba(0,0,0,0.6), 
-                inset 0 6px 10px rgba(255,255,255,0.8), 
-                inset 0 -6px 12px rgba(0,0,0,0.2);
         }
 
-        .control-btn { background: linear-gradient(135deg, #EF4444, #B91C1C) !important; font-size: 24px !important; border-color: #F87171 !important; }
+        .control-btn { background: linear-gradient(135deg, #EF4444, #B91C1C) !important; font-size: 20px !important; border-color: #F87171 !important; }
         .submit-btn { background: linear-gradient(135deg, #10B981, #047857) !important; border-color: #34D399 !important; }
 
         /* 右側城市地圖 */
         #construction-yard {
-            width: 48%; 
-            height: 100%;
+            width: 49%; 
             background-image: url('citymap.png'); 
             background-size: 100% 100%; 
             background-position: center center;
             background-repeat: no-repeat;
-            border-radius: 32px; 
+            border-radius: 24px; 
             border: 3px solid #34d399;
             position: relative; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.6);
         }
 
         #yard-title { 
-            position: absolute; top: -15px; left: 25px; font-size: 18px; color: #FFFFFF; 
-            font-weight: bold; letter-spacing: 1px; z-index: 30;
-            background: rgba(15, 23, 42, 0.9); padding: 4px 16px; border-radius: 12px;
+            position: absolute; top: -12px; left: 15px; font-size: 14px; color: #FFFFFF; 
+            font-weight: bold; letter-spacing: 0.5px; z-index: 30;
+            background: rgba(15, 23, 42, 0.95); padding: 3px 12px; border-radius: 8px;
             border: 1px solid rgba(52, 211, 153, 0.4);
         }
 
-        /* 👑 右上角大拇指榮譽勳章容器 */
+        /* 右上角大拇指榮譽勳章容器 */
         #badge-container {
             position: absolute;
-            top: 12px;
-            right: 20px;
+            top: 10px;
+            right: 15px;
             z-index: 40;
             display: flex;
-            gap: 6px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 4px 10px;
-            border-radius: 30px;
+            gap: 4px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 3px 8px;
+            border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
-            min-height: 38px;
+            min-height: 32px;
             align-items: center;
         }
 
         .thumb-badge {
-            font-size: 26px;
+            font-size: 20px;
             animation: badgePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.5) forwards;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
             user-select: none;
@@ -220,7 +232,6 @@
 
         @keyframes badgePop {
             0% { transform: scale(0) rotate(-30deg); opacity: 0; }
-            70% { transform: scale(1.3) rotate(10deg); }
             100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
 
@@ -228,7 +239,7 @@
             width: 100%; 
             height: 100%; 
             position: relative;
-            border-radius: 28px;
+            border-radius: 20px;
             overflow: hidden; 
         }
 
@@ -280,33 +291,41 @@
         }
         .modal-box { 
             background: linear-gradient(135deg, #0284c7, #0369a1); color: #FFFFFF; 
-            padding: 30px 35px; border-radius: 24px; text-align: center; 
-            width: 90%; max-width: 520px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.2); 
+            padding: 25px 30px; border-radius: 20px; text-align: center; 
+            width: 90%; max-width: 480px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8); 
             border: 2px solid rgba(255,255,255,0.3);
-            animation: modalPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.25);
         }
-        .modal-box h2 { font-size: 34px; font-weight: 900; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .modal-box p { font-size: 22px; color: #FCD34D; margin-top: 10px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.5); line-height: 1.4; }
+        .modal-box h2 { font-size: 28px; font-weight: 900; }
+        .modal-box p { font-size: 18px; color: #FCD34D; margin-top: 10px; font-weight: 800; line-height: 1.4; }
         
         #modal-continue-btn {
             display: none;
-            margin: 20px auto 0 auto;
-            padding: 12px 36px;
-            font-size: 24px;
+            margin: 15px auto 0 auto;
+            padding: 10px 30px;
+            font-size: 20px;
             font-weight: 900;
             color: #FFFFFF;
             background: linear-gradient(135deg, #10B981, #059669);
             border: 2px solid #34D399;
-            border-radius: 16px;
+            border-radius: 12px;
             cursor: pointer;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.4);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             transition: all 0.15s;
         }
-        #modal-continue-btn:hover {
-            transform: scale(1.05);
-            background: linear-gradient(135deg, #34D399, #10B981);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        #modal-continue-btn:hover { transform: scale(1.04); }
+
+        /* 👑 響應式斷點：針對平板橫向與直向優化高度 */
+        @media (max-width: 1024px) {
+            #main-container {
+                height: auto;
+                flex-direction: column; /* 允許直向平板自動上下排列 */
+                align-items: center;
+            }
+            #play-area, #construction-yard {
+                width: 100%;
+                height: 420px; /* 固定的平板舒適操作高度 */
+            }
         }
     </style>
 </head>
@@ -332,7 +351,7 @@
         <div id="dashboard">
             <div class="stat-box">關卡: <span id="lbl-level">1</span></div>
             <div class="stat-box">得分: <span id="lbl-score">0</span></div>
-            <div class="stat-box evolution-status">當前解鎖區域: <span id="lbl-stage">等待開發</span></div>
+            <div class="stat-box evolution-status"><span id="lbl-stage">等待開發</span></div>
         </div>
     </div>
 
@@ -386,25 +405,24 @@
         let objectsBuiltCount = 0; 
 
         const BUILD_SEQUENCE = [
-            { name: '01. 西南側外環快速公路' }, { name: '02. 西南沿線綠化林蔭道' },
-            { name: '03. 西側運河親水景觀走廊' }, { name: '04. 運河西岸低密住宅群' },
-            { name: '05. 西北花園別墅住宅特區' }, { name: '06. 西北社區醫療康養中心' },
-            { name: '07. 北側沿河生態休閒綠帶' }, { name: '08. 北岸濱河運動文化公園' },
-            { name: '09. 南側濱海景觀聯絡公路' }, { name: '10. 南灣觀海高層藍籌學府' },
-            { name: '11. 東東南智慧科技產業園區' }, { name: '12. 東南新創研發總部大樓' },
-            { name: '13. 東區現代高鐵樞紐中轉站' }, { name: '14. 東側商務甲級辦公大廈' },
-            { name: '15. 東北新興智慧住宅社區' }, { name: '16. 東北大型文體購物中心' },
-            { name: '17. 西區跨河生態景觀大橋' }, { name: '18. 城市軌道交通西線輕軌' },
-            { name: '19. 內環立體高架聯絡車道' }, { name: '20. 市中心環狀生態輕軌線' },
-            { name: '21. 中央核心地下交通網絡' }, { name: '22. 市政政務聯合辦公大樓' },
-            { name: '23. 璀璨時尚步行購物街區' }, { name: '24. 國際藝術劇院與音樂廳' },
-            { name: '25. 中軸雙噴泉歷史紀念廣場' }, { name: '26. 城市中央晶鑽玻璃展覽館' },
-            { name: '27. 核心商圈帝國聯邦大廈' }, { name: '28. 國際金融中心超高摩天樓' },
-            { name: '29. 全球貿易財富晶鑽主塔' }, { name: '30. 超五星璀璨雲端觀景酒店' },
-            { name: '31. 跨世紀巨型地標璀璨雙子星' }, { name: '32. 繁榮璀璨全景大都市落成' }
+            { name: '01. 西南外環公路' }, { name: '02. 西南綠化林蔭' },
+            { name: '03. 西側親水走廊' }, { name: '04. 運河西岸住宅' },
+            { name: '05. 西北花園別墅' }, { name: '06. 西北醫療中心' },
+            { name: '07. 北側沿河綠帶' }, { name: '08. 北岸濱河公園' },
+            { name: '09. 南側濱海公路' }, { name: '10. 南灣高層學府' },
+            { name: '11. 東南科技園區' }, { name: '12. 東南研發總部' },
+            { name: '13. 東區高鐵樞紐' }, { name: '14. 東側商務大廈' },
+            { name: '15. 東北智慧社區' }, { name: '16. 東北購物中心' },
+            { name: '17. 西區跨河大橋' }, { name: '18. 西線軌道交通' },
+            { name: '19. 內環立體高架' }, { name: '20. 環狀生態輕軌' },
+            { name: '21. 中央地下網絡' }, { name: '22. 市政聯合大樓' },
+            { name: '23. 時尚步行街區' }, { name: '24. 國際藝術劇院' },
+            { name: '25. 中軸雙泉廣場' }, { name: '26. 中央玻璃展館' },
+            { name: '27. 核心帝國大廈' }, { name: '28. 國際金融中心' },
+            { name: '29. 全球貿易主塔' }, { name: '30. 雲端觀景酒店' },
+            { name: '31. 地標璀璨雙子' }, { name: '32. 全景都市落成' }
         ];
 
-        // 👑 從本機快取載入歷史通關大拇指數量
         function renderThumbBadges() {
             const container = document.getElementById('badge-container');
             if (!container) return;
@@ -412,7 +430,6 @@
             let savedLoops = parseInt(localStorage.getItem('completed_loops')) || 0;
             container.innerHTML = '';
             
-            // 根據通關次數印出對應數量的大拇指
             for(let i = 0; i < savedLoops; i++) {
                 const thumb = document.createElement('span');
                 thumb.className = 'thumb-badge';
@@ -456,7 +473,7 @@
             let mode = getRoundMode(currentLevel);
 
             if (mode === 'SHAPE') {
-                instruction.textContent = "請找出三個此形狀：";
+                instruction.textContent = "請找出三個指定形狀：";
                 playArea.className = "grid-shape-mode"; 
                 playArea.innerHTML = '';
                 clickedCorrectCount = 0;
@@ -486,7 +503,6 @@
                 });
 
             } else if (mode === 'MATH') {
-                instruction.textContent = "大腦活化心算！請輸入正確答案：";
                 playArea.className = "grid-math-mode"; 
                 playerInputStr = "";
                 targetDisplay.textContent = "?";
@@ -509,7 +525,7 @@
                     questionText = `${evenNum} ÷ 2`;
                 }
 
-                instruction.textContent = `心算風暴： ${questionText} = 多少？`;
+                instruction.textContent = `請速算： ${questionText} = ?`;
 
                 playArea.innerHTML = '';
                 for (let i = 1; i <= 9; i++) { createNumButton(i); }
@@ -529,7 +545,7 @@
                 playArea.appendChild(submitBtn);
 
             } else if (mode === 'COLOR') {
-                instruction.textContent = "活化色彩感知！請找出三個此顏色：";
+                instruction.textContent = "請找出三個指定色彩：";
                 playArea.className = "grid-color-mode"; 
                 playArea.innerHTML = '';
                 clickedCorrectCount = 0;
@@ -611,20 +627,14 @@
         function processRoundSuccess() {
             objectsBuiltCount++; 
             currentLevel++;
-            
             revealCityMask(); 
-            
-            setTimeout(() => {
-                triggerTransitionModal();
-            }, 500);
+            setTimeout(() => { triggerTransitionModal(); }, 500);
         }
 
         function revealCityMask() {
             let tileIndex = objectsBuiltCount - 1;
             let targetTile = document.getElementById(`tile-${tileIndex}`);
-            if (targetTile) {
-                targetTile.classList.add('revealed');
-            }
+            if (targetTile) { targetTile.classList.add('revealed'); }
         }
 
         function triggerTransitionModal() {
@@ -634,16 +644,13 @@
             const continueBtn = document.getElementById('modal-continue-btn');
             if(!overlay || !title || !desc || !continueBtn) return;
 
-            // 👑 當完成 32 關的倍數（32, 64, 96...）時觸發結算
             if ((currentLevel - 1) % 32 === 0) {
                 let currentLoopCount = (currentLevel - 1) / 32;
                 
-                title.textContent = `🎉 恭喜完成第 ${currentLoopCount} 輪大滿貫！`;
-                desc.innerHTML = `您已成功解鎖整座繁華都市！<br>獲得榮譽大拇指 👍 勳章一枚！<br>表現得太出色了，請先閉眼休息一下。`;
+                title.textContent = `🎉 榮耀大滿貫完成！`;
+                desc.innerHTML = `您已成功通關第 ${currentLoopCount} 輪全部 32 個挑戰！<br>獲得大拇指 👍 勳章一枚！<br>請喝口水、閉眼稍微休息一下。`;
                 
-                // 👑 將最新累計的輪次寫入本機快取
                 localStorage.setItem('completed_loops', currentLoopCount);
-                // 同步刷新右上角的大拇指展示
                 renderThumbBadges();
 
                 continueBtn.style.display = 'block';
@@ -653,42 +660,32 @@
                 let latestBuildName = BUILD_SEQUENCE[tileIndex].name;
                 let prevMode = getRoundMode(currentLevel - 1);
 
-                if (prevMode === 'MATH') {
-                    title.textContent = `🧠 大腦速算成功！`;
-                } else if (prevMode === 'COLOR') {
-                    title.textContent = `🎨 色彩辨識成功！`;
-                } else {
-                    title.textContent = `🧱 視覺消除成功！`;
-                }
+                if (prevMode === 'MATH') { title.textContent = `🧠 心算活化成功！`; } 
+                else if (prevMode === 'COLOR') { title.textContent = `🎨 色彩感知成功！`; } 
+                else { title.textContent = `🧱 視覺消除成功！`; }
                 
-                desc.textContent = `解鎖迷霧：${latestBuildName}`;
+                desc.textContent = `驅散迷霧：${latestBuildName}`;
                 continueBtn.style.display = 'none'; 
                 overlay.style.display = 'flex';
                 
                 setTimeout(() => {
                     overlay.style.display = 'none';
                     initGame();
-                }, 1800);
+                }, 1600);
             }
         }
 
         function handleModalContinue() {
-            const overlay = document.getElementById('modal-overlay');
-            const continueBtn = document.getElementById('modal-continue-btn');
-            
-            overlay.style.display = 'none';
-            continueBtn.style.display = 'none';
-
-            // 重置迷霧進度，重新蓋上 32 格黑盒子
+            document.getElementById('modal-overlay').style.display = 'none';
+            document.getElementById('modal-continue-btn').style.display = 'none';
             objectsBuiltCount = 0; 
             createBaseMesh(); 
-            
             initGame();
         }
 
         window.onload = () => {
             createBaseMesh();
-            renderThumbBadges(); // 👑 頁面開啟時自動載入快取中的大拇指
+            renderThumbBadges();
             initGame();
         };
     </script>
