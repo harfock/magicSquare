@@ -613,13 +613,29 @@ function handleMathGridSelection(clickedBtn, isCorrect) {
     }
 }
 
+// 👑 精準修正：觸發發呆或多次答錯時，霓虹燈流動與正確答案閃爍【同步開啟與關閉】
 function flashAllCorrectAnswersOnce() {
+    const playArea = document.getElementById('play-area');
     let mode = getRoundMode(currentLevel);
     let targets = [];
 
+    // 1. 同步開啟：九宮格網格的外圍霓虹跑馬燈
+    if (playArea) {
+        playArea.classList.remove('neon-run-hint');
+        void playArea.offsetWidth; // 強制重繪，確保動畫重置
+        playArea.classList.add('neon-run-hint');
+        
+        // 1.5 秒後與按鈕同步移除，維持畫面乾淨
+        setTimeout(() => {
+            playArea.classList.remove('neon-run-hint');
+        }, 1500);
+    }
+
+    // 2. 找出目前關卡對應的正確答案按鈕
     if (mode === 'SEQUENCE') {
         let remainingBtns = Array.from(document.querySelectorAll('.seq-btn[data-val]'));
         if (remainingBtns.length > 0) {
+            // 排序找出剩餘數字中最小的那一個（即接下來該點的正確答案）
             remainingBtns.sort((a, b) => parseInt(a.getAttribute('data-val')) - parseInt(b.getAttribute('data-val')));
             targets = [remainingBtns[0]]; 
         }
@@ -628,16 +644,19 @@ function flashAllCorrectAnswersOnce() {
                        .filter(el => !el.classList.contains('eliminated'));
     }
 
+    // 3. 同步開啟：內部正確按鈕的閃爍提示
     targets.forEach(targetBtn => {
         targetBtn.classList.remove('flash-hint');
-        void targetBtn.offsetWidth; 
+        void targetBtn.offsetWidth; // 強制重繪
         targetBtn.classList.add('flash-hint');
         
+        // 1.5 秒後同步移除閃爍效果
         setTimeout(() => {
             targetBtn.classList.remove('flash-hint');
-        }, 1000);
+        }, 1500);
     });
 
+    // 重新部署下一輪的 5 秒發呆計時
     startGlobalIdleHintTimeout();
 }
 
