@@ -149,7 +149,7 @@ body {
 /* --- 核心按鈕與巨型數字視覺 --- */
 .shape-box, .num-btn, .seq-btn, .color-btn {
     width: 100%;
-    aspect-ratio: 1 / 1; /* 強制保持 1:1 正方形 */
+    aspect-ratio: 1 / 1; 
     border-radius: 16px;
     cursor: pointer;
     transition: all 0.15s ease-in-out;
@@ -334,51 +334,56 @@ body {
 .flash-hint { animation: flashHint 0.4s ease-in-out 2; }
 
 /* ==========================================================================
-   📱 平板電腦（Tablet）專屬精準適應
+   📱 平板電腦（Tablet）防重疊、防拉伸終極完美自適應方案
    ========================================================================== */
 
-/* 1. 【縱向拿持 Portrait】模式：限制寬度，左右留白，杜絕往下擠壓地圖 */
+/* 1. 【縱向拿持 Portrait 模式】核心重構：限制組件寬高，左右安全留白 */
 @media (max-width: 1024px) and (orientation: portrait) {
     #main-container {
         flex-direction: column; 
-        align-items: center; /* 👑 讓左右收縮的遊玩區在畫面水平正中央居中 */
-        padding: 10px 16px;
-        gap: 16px;
-        height: calc(100vh - 100px); 
-        min-height: 0;
+        align-items: center; /* 讓上下兩個區塊在畫面水平居中對齊 */
+        justify-content: flex-start;
+        padding: 16px;
+        gap: 20px;
+        height: calc(100vh - 80px); /* 鎖定主容器總高 */
+        overflow-y: auto; /* 若極端小螢幕允許滾動，絕不重疊 */
     }
 
+    /* 🧱 遊玩區：限制最大寬度，不再強行撐滿，左右兩側留出 Blank Area */
     #play-area {
-        width: 85%; /* 👑 拒絕 100% 撐滿！主動縮小到 85%，左右兩側自然產生空白 */
-        max-width: 520px; /* 👑 鎖定最大寬度，這樣格子在橫向就不會無限變寬 */
+        width: 90%; 
+        max-width: 460px; /* 👑 鎖死寬度，確保格子維持精緻比例 */
         height: auto;
         padding: 12px;
         gap: 8px;
     }
 
     .shape-box, .num-btn, .seq-btn, .color-btn {
-        aspect-ratio: 1 / 1; /* 👑 強制在直向也保持 1:1 正方形，格子絕不變形 */
+        aspect-ratio: 1 / 1; /* 👑 嚴格鎖定 1:1 正方形 */
     }
 
-    /* 下方都市藍圖區：徹底解放，佔滿剩餘的所有垂直空間，永不被覆蓋 */
+    /* 🗺️ 藍圖地圖區：移除彈性 flex 撐開，設定精準的固定比例，防止上彈覆蓋 */
     #construction-yard {
-        width: 100%;
-        flex: 1; 
-        min-height: 0; 
-        margin-top: 4px;
+        width: 90%; 
+        max-width: 460px; /* 👑 寬度與遊玩區對齊，左右形成完美的整齊留白 */
+        aspect-ratio: 2 / 1; /* 👑 核心：因為是 8x4 的網格，強制設定 2:1 的黃金外觀比例 */
+        height: auto; /* 拒絕 flex 自動延展 */
+        flex: none; /* 徹底斷開高度拉扯機制 */
+        border: 2px solid var(--accent-emerald);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.5);
     }
 
     #iso-canvas-wrapper {
-        flex: 1;
-        min-height: 0;
+        width: 100%;
+        height: 100%;
     }
 
-    /* 直向平板數字大小最佳化 */
-    .num-btn { font-size: 42px !important; }
-    .seq-btn { font-size: 48px !important; }
+    /* 字體微調，確保長輩好閱讀 */
+    .num-btn { font-size: 36px !important; }
+    .seq-btn { font-size: 42px !important; }
 }
 
-/* 2. 【橫向拿持 Landscape】模式：完美的左右分割比例 */
+/* 2. 【橫向拿持 Landscape 模式】優化 */
 @media (max-width: 1366px) and (orientation: landscape) {
     #main-container {
         flex-direction: row; 
