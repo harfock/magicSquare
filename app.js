@@ -11,7 +11,6 @@ let currentTargetShape = '';
 let currentTargetColor = '';
 let mathAnswer = 0;
 let mathWrongCount = 0;
-let mathTimer10s = null;
 let sequenceNumbers = [];
 let nextExpectedIndex = 0;
 
@@ -23,6 +22,9 @@ let objectsBuiltCount = 0;
 let carouselIndex = 0;
 let infoRotationTimer = null;
 let idleTimer = null;
+
+// 👑 全局發呆自動提示專用計時器 (取代舊有單一模式計時)
+let globalIdleHintTimer = null;
 
 // 👑 核心優化：定義 25 關為一輪大滿貫
 const TOTAL_ROUNDS = 25;
@@ -41,7 +43,6 @@ function bindElderTouch(element, callback) {
 }
 
 function getCurrentImageConfig() {
-    // 👑 修正：大滿貫基數從 32 改為 25
     let loops = Math.floor((currentLevel - 1) / TOTAL_ROUNDS);
     let imgIndex = loops % GALLERY_IMAGES.length;
     return GALLERY_IMAGES[imgIndex];
@@ -54,7 +55,7 @@ function refreshYardBackground() {
 
     let imgConfig = getCurrentImageConfig();
     yard.style.backgroundImage = `url('${imgConfig.url}')`;
-    title.textContent = `${imgConfig.name}`; // 👑 配合 CSS 釋放標題，不再寫死 32 區字樣
+    title.textContent = `${imgConfig.name}`; 
 }
 
 function renderThumbBadges() {
@@ -138,6 +139,7 @@ function updateCarouselDisplay() {
 }
 
 function resetIdleTimer() {
+    // 1. 原本的霓虹螢幕保護程式計時
     const neonContainer = document.getElementById('neon-trail-container');
     if (neonContainer && neonContainer.classList.contains('active')) {
         neonContainer.classList.remove('active');
@@ -146,6 +148,9 @@ function resetIdleTimer() {
     idleTimer = setTimeout(() => {
         if (neonContainer) neonContainer.classList.add('active');
     }, 5000);
+
+    // 👑 2. 核心修正：只要玩家觸控或點擊螢幕，立刻重設「5秒全局發呆自動提示」計時器
+    startGlobalIdleHintTimeout();
 }
 
 function createBaseMesh() {
@@ -153,7 +158,6 @@ function createBaseMesh() {
     if (!grid) return;
     grid.innerHTML = '';
     
-    // 👑 修正：只動態渲染 25 個遮罩格子 (完美對應 5x5 CSS 網格)
     for (let i = 0; i < TOTAL_ROUNDS; i++) {
         const tile = document.createElement('div');
         tile.className = 'grid-tile';
@@ -173,7 +177,8 @@ function getRoundMode(level) {
 }
 
 function initGame() {
-    if (mathTimer10s) clearTimeout(mathTimer10s);
+    // 👑 初始化新關卡時，徹底清空發呆提示計時器
+    if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer);
 
     const playArea = document.getElementById('play-area');
     const targetDisplay = document.getElementById('target-display');
@@ -207,6 +212,8 @@ function initGame() {
         spawnPool.forEach((item) => {
             const box = document.createElement('div');
             box.className = 'shape-box';
+            // 👑 標記正確答案以便發呆提示搜尋
+            if (item.isTarget) box.setAttribute('data-target-hint', 'true');
             box.innerHTML = SHAPE_TEMPLATES[item.type];
             bindElderTouch(box, () => handleItemClick(box, item.isTarget, 150));
             playArea.appendChild(box);
@@ -256,13 +263,12 @@ function initGame() {
             const btn = document.createElement('div');
             btn.className = 'num-btn';
             btn.textContent = val;
-            if (val === mathAnswer) btn.setAttribute('data-correct', 'true'); 
+            // 👑 標記正確答案以便發呆提示搜尋
+            if (val === mathAnswer) btn.setAttribute('data-target-hint', 'true'); 
 
             bindElderTouch(btn, () => handleMathGridSelection(btn, val === mathAnswer));
             playArea.appendChild(btn);
         });
-
-        startMathIdleTimeout();
 
     } else if (mode === 'COLOR') {
         instruction.innerHTML = '請找出 <span style="color: #FCD34D;">三個</span> 指定色彩：';
@@ -289,6 +295,8 @@ function initGame() {
         spawnPool.forEach((item) => {
             const btn = document.createElement('div');
             btn.className = 'color-btn';
+            // 👑 標記正確答案以便發呆提示搜尋
+            if (item.isTarget) btn.setAttribute('data-target-hint', 'true');
             btn.style.backgroundColor = item.color; 
             bindElderTouch(btn, () => handleItemClick(btn, item.isTarget, 200)); 
             playArea.appendChild(btn);
@@ -313,17 +321,24 @@ function initGame() {
             const seqBtn = document.createElement('div');
             seqBtn.className = 'seq-btn';
             seqBtn.textContent = num;
+            // 👑 動態屬性：記錄其數值，方便發呆時找出當前「最小值」按鈕
+            seqBtn.setAttribute('data-val', num);
 
             bindElderTouch(seqBtn, () => {
                 let correctNextValue = sortedNumbers[nextExpectedIndex];
                 if (num === correctNextValue) {
+                    seqBtn.classList.remove('flash-hint'); // 若正在閃爍則移除
                     seqBtn.classList.add('completed');
+                    seqBtn.removeAttribute('data-val'); // 已完成，移除數值標記
                     nextExpectedIndex++;
                     gameScore += 50;
 
                     if (nextExpectedIndex === 6) {
                         gameScore += 100; 
                         processRoundSuccess();
+                    } else {
+                        // 👑 答對其中一步，重新起算下一個數字的 5秒發呆計時
+                        startGlobalIdleHintTimeout();
                     }
                 } else {
                     seqBtn.classList.add('shake');
@@ -335,11 +350,13 @@ function initGame() {
         });
     }
 
+    // 👑 任何模式初始化完畢，立刻開啟「5秒全局發呆自動提示機制」
+    startGlobalIdleHintTimeout();
     updateCarouselDisplay();
 }
 
 function handleMathGridSelection(clickedBtn, isCorrect) {
-    if (mathTimer10s) clearTimeout(mathTimer10s); 
+    if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer); 
 
     if (isCorrect) {
         gameScore += 250;
@@ -351,43 +368,70 @@ function handleMathGridSelection(clickedBtn, isCorrect) {
         setTimeout(() => clickedBtn.classList.remove('shake'), 350);
 
         if (mathWrongCount >= 3) {
-            flashCorrectMathAnswer();
+            flashAllCorrectAnswersOnce(); // 錯三次直接高亮
         } else {
-            startMathIdleTimeout(); 
+            startGlobalIdleHintTimeout(); // 未滿三次，重啟5秒發呆提示
         }
     }
 }
 
-function flashCorrectMathAnswer() {
-    const correctBtn = document.querySelector('[data-correct="true"]');
-    if (correctBtn) {
-        correctBtn.classList.remove('flash-hint');
-        void correctBtn.offsetWidth; 
-        correctBtn.classList.add('flash-hint');
+// 👑 全局核心優化：1秒內快速閃爍5次正確目標（適應全模式）
+function flashAllCorrectAnswersOnce() {
+    let mode = getRoundMode(currentLevel);
+    let targets = [];
+
+    if (mode === 'SEQUENCE') {
+        // 數列模式：找出目前還沒被點選的按鈕中，數值最小的那一個
+        let remainingBtns = Array.from(document.querySelectorAll('.seq-btn[data-val]'));
+        if (remainingBtns.length > 0) {
+            remainingBtns.sort((a, b) => parseInt(a.getAttribute('data-val')) - parseInt(b.getAttribute('data-val')));
+            targets = [remainingBtns[0]]; // 只提示當前該點的那一個
+        }
+    } else {
+        // 圖形、顏色、心算模式：直接撈取尚未被消除且帶有 data-target-hint 的按鈕
+        targets = Array.from(document.querySelectorAll('[data-target-hint="true"]'))
+                       .filter(el => !el.classList.contains('eliminated'));
+    }
+
+    // 執行同步高亮閃爍（配合 CSS 1秒閃爍5次）
+    targets.forEach(targetBtn => {
+        targetBtn.classList.remove('flash-hint');
+        void targetBtn.offsetWidth; 
+        targetBtn.classList.add('flash-hint');
         
         setTimeout(() => {
-            correctBtn.classList.remove('flash-hint');
-            startMathIdleTimeout();
+            targetBtn.classList.remove('flash-hint');
         }, 1000);
-    }
+    });
+
+    // 👑 閃爍完成後，若該關卡尚未結束，繼續維持 5 秒發呆循環監聽
+    startGlobalIdleHintTimeout();
 }
 
-function startMathIdleTimeout() {
-    if (mathTimer10s) clearTimeout(mathTimer10s);
-    mathTimer10s = setTimeout(() => {
-        flashCorrectMathAnswer();
-    }, 10000);
+// 👑 核心啟動器：閒置 5 秒自動觸發提示
+function startGlobalIdleHintTimeout() {
+    if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer);
+    globalIdleHintTimer = setTimeout(() => {
+        flashAllCorrectAnswersOnce();
+    }, 5000); // 👑 正式改為 5000 毫秒 (5秒)
 }
 
 function handleItemClick(element, isTarget, scoreReward) {
     if (element.classList.contains('eliminated') || element.classList.contains('shake')) return;
 
     if (isTarget) {
+        if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer);
+        element.classList.remove('flash-hint');
         element.classList.add('eliminated');
         clickedCorrectCount++;
         gameScore += scoreReward;
 
-        if (clickedCorrectCount === 3) { processRoundSuccess(); }
+        if (clickedCorrectCount === 3) { 
+            processRoundSuccess(); 
+        } else {
+            // 👑 找到了其中一個目標，重新起算其餘目標的 5秒發呆提示
+            startGlobalIdleHintTimeout();
+        }
     } else {
         element.classList.add('shake');
         setTimeout(() => element.classList.remove('shake'), 350);
@@ -395,7 +439,6 @@ function handleItemClick(element, isTarget, scoreReward) {
 }
 
 function revealCityMask() {
-    // 👑 修正：索引從 % 32 改為 % 25
     let tileIndex = (objectsBuiltCount - 1) % TOTAL_ROUNDS; 
     let targetTile = document.getElementById(`tile-${tileIndex}`);
     
@@ -412,7 +455,7 @@ function revealCityMask() {
 }
 
 function processRoundSuccess() {
-    if (mathTimer10s) clearTimeout(mathTimer10s); 
+    if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer); // 過關立刻切斷計時
     objectsBuiltCount++; 
     currentLevel++;
     revealCityMask(); 
@@ -429,7 +472,6 @@ function triggerTransitionModal() {
     let imgConfig = getCurrentImageConfig();
     let themeList = DYNAMIC_THEMES[imgConfig.type] || DYNAMIC_THEMES.CITY;
 
-    // 👑 核心修正：大滿貫通關判定從 32 改為 25
     if ((currentLevel - 1) % TOTAL_ROUNDS === 0) {
         let currentLoopCount = (currentLevel - 1) / TOTAL_ROUNDS;
         let lastImgConfig = GALLERY_IMAGES[(currentLoopCount - 1) % GALLERY_IMAGES.length];
@@ -486,7 +528,7 @@ if (continueBtn) {
     bindElderTouch(continueBtn, handleModalContinue);
 }
 
-// 👑 初始化啟動閉環
+// 啟動遊戲與環境閉環
 document.addEventListener('DOMContentLoaded', () => {
     createBaseMesh();
     renderThumbBadges();
