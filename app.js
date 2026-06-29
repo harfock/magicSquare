@@ -29,6 +29,23 @@ let globalIdleHintTimer = null;
 // 核心定義：25 關為一輪大滿貫
 const TOTAL_ROUNDS = 25;
 
+// === 🎵 聽覺升級：泡泡啵啵聲音效模組 ===
+// 使用 Audio 陣列做 Pool 可以支援高頻率連續點擊正確答案時不卡頓、重疊播放
+const BUBBLE_SOUND_URL = './soundreality-bubble-pop-424583.mp3'; 
+const audioPool = Array.from({ length: 5 }, () => new Audio(BUBBBLE_SOUND_URL));
+let poolIndex = 0;
+
+function playPlinkSound() {
+    try {
+        const sound = audioPool[poolIndex];
+        sound.currentTime = 0; // 倒帶回最前端，確保立刻發聲
+        sound.play().catch(err => console.log("音效解鎖提示: 需等用戶點擊網頁後生效", err));
+        poolIndex = (poolIndex + 1) % audioPool.length;
+    } catch (e) {
+        console.error("音效播放失敗", e);
+    }
+}
+
 // === 超擬真 3D 深海流體氣泡引擎 ===
 let bubbleCanvas = null;
 let bubbleCtx = null;
@@ -55,7 +72,7 @@ function resizeBubbleCanvas() {
 function spawnAmbientBubble() {
     if (!bubbleCanvas) return;
     
-    const isHuge = Math.random() < 0.25; // 25% 機率生成巨型氣泡
+    const isHuge = Math.random() < 0.25; 
     let size = Math.random() * 12 + 4; 
     
     if (isHuge) {
@@ -71,27 +88,22 @@ function spawnAmbientBubble() {
         vy: -(Math.random() * 1.3 + 0.6), 
         size: size,
         isHuge: isHuge,
-        
-        // 👑 果凍形變參數
         squishPhase: Math.random() * Math.PI * 2,
         squishSpeed: Math.random() * 0.08 + 0.05, 
         squishAmount: isHuge ? 0.08 : 0.04,        
-        
         wobbleAngle: Math.random() * Math.PI,
         depthFactor: isHuge ? 0.6 : Math.random() * 0.4 + 0.4, 
         splitY: bubbleCanvas.height * (Math.random() * 0.4 + 0.2) 
     });
 }
 
-// 👑 核心優化：大氣泡到達指定高度後，瞬間炸裂成大量細密小氣泡
 function splitBubble(parentBubble) {
-    const spawnCount = Math.floor(Math.random() * 10) + 12; // 產生 12~22 個微型氣泡
+    const spawnCount = Math.floor(Math.random() * 10) + 12; 
     const currentRadius = parentBubble.size;
 
     for (let i = 0; i < spawnCount; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const blastSpeed = Math.random() * 3.5 + 1.5; // 向外炸開的力道
-        
+        const blastSpeed = Math.random() * 3.5 + 1.5; 
         const offsetX = (Math.random() - 0.5) * currentRadius;
         const offsetY = (Math.random() - 0.5) * currentRadius;
 
@@ -99,22 +111,23 @@ function splitBubble(parentBubble) {
             x: parentBubble.x + offsetX,
             y: parentBubble.y + offsetY,
             vx: parentBubble.vx + Math.cos(angle) * blastSpeed,
-            vy: parentBubble.vy + Math.sin(angle) * blastSpeed - 0.8, // 疊加向上浮力
-            size: Math.random() * 3.5 + 1.5, // 細密小氣泡 1.5px ~ 5px
+            vy: parentBubble.vy + Math.sin(angle) * blastSpeed - 0.8, 
+            size: Math.random() * 3.5 + 1.5, 
             isHuge: false, 
             squishPhase: Math.random() * Math.PI,
             squishSpeed: Math.random() * 0.2 + 0.15, 
             squishAmount: 0.02,
             wobbleAngle: Math.random() * Math.PI,
             depthFactor: parentBubble.depthFactor * 1.4, 
-            splitY: -999 // 標記為分裂後的小氣泡，防止無限分裂
+            splitY: -999 
         });
     }
 }
 
-// 點擊正確時的粒子爆炸
+// 負責純粹繪製畫面上的泡泡爆炸粒子（不包含音效，音效改由點擊端觸發）
 function createExplosion(x, y) {
     if (!bubbleCtx) return;
+
     const count = 14; 
     for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
@@ -135,60 +148,47 @@ function updateExplosionAnimation() {
     if (!bubbleCtx) return;
     bubbleCtx.clearRect(0, 0, bubbleCanvas.width, bubbleCanvas.height);
     
-    // 生成環境氣泡
     if (backgroundBubbles.length < 45 && Math.random() < 0.04) {
         spawnAmbientBubble();
     }
     
-    // 👑 修正核心：建立一個暫存陣列，用來存放這一訊框內被分裂出來的小氣泡
     let newSplittedBubbles = [];
     
     backgroundBubbles = backgroundBubbles.filter(p => {
-        // 👑 物理修復：如果它是剛炸裂出來的小氣泡，施加海水水阻（Friction）讓它減速，才會形成成群漂浮感
         if (!p.isHuge && p.splitY === -999) {
-            p.vx *= 0.92; // 橫向速度快速衰減
-            p.vy *= 0.96; // 縱向爆炸力衰減
-            // 逐漸平穩，回歸正常深海向上漂浮的微速
+            p.vx *= 0.92; 
+            p.vy *= 0.96; 
             if (p.vy > -0.5) p.vy = -(Math.random() * 1.0 + 0.6);
         }
 
         p.x += p.vx;
         p.y += p.vy;
         
-        // 1. 水流引起的左右蛇行
         p.wobbleAngle += 0.015;
         p.x += Math.sin(p.wobbleAngle) * 0.2;
         
-        // 邊界檢查
         if (p.y < -p.size * 2 || p.x > bubbleCanvas.width + p.size * 2) return false;
         
-        // 👑 修正核心：大氣泡到位置時，把產生的小氣泡推入暫存區，然後移除大氣泡
         if (p.isHuge && p.y <= p.splitY) {
-            // 這裡不直接 push 到 backgroundBubbles 避免干擾目前的 filter
             const tempLengthBefore = backgroundBubbles.length;
             splitBubble(p);
-            // 把剛剛 splitBubble 新加進陣列尾端的那些小氣泡抽出來放到暫存區
             let splitted = backgroundBubbles.splice(tempLengthBefore);
             newSplittedBubbles.push(...splitted);
-            return false; // 移除大氣泡
+            return false; 
         }
         
-        // 2. 計算流體動態形變
         p.squishPhase += p.squishSpeed;
         let radiusX = p.size * (1 + Math.sin(p.squishPhase) * p.squishAmount);
         let radiusY = p.size * (1 - Math.sin(p.squishPhase) * p.squishAmount);
         
-        // 3. 環境光度計算
         let yProgress = 1 - (p.y / bubbleCanvas.height); 
         let xProgress = p.x / bubbleCanvas.width;
         let lightIntensity = (0.2 + (yProgress * 0.5) + (xProgress * 0.2)) * p.depthFactor;
         if (lightIntensity > 1) lightIntensity = 1;
         
-        // 4. 動態 3D 光影矩陣
         let highlightX = p.x - radiusX * (0.3 - xProgress * 0.15);
         let highlightY = p.y - radiusY * (0.3 + yProgress * 0.15);
         
-        // 繪製主體漸層
         bubbleCtx.beginPath();
         bubbleCtx.ellipse(p.x, p.y, radiusX, radiusY, 0, 0, Math.PI * 2);
         
@@ -205,13 +205,11 @@ function updateExplosionAnimation() {
         bubbleCtx.fillStyle = gradient;
         bubbleCtx.fill();
         
-        // 5. 精緻的 3D 立體弧形高光點
         bubbleCtx.beginPath();
         bubbleCtx.ellipse(highlightX, highlightY, radiusX * 0.15, radiusY * 0.12, Math.PI / 4, 0, Math.PI * 2);
         bubbleCtx.fillStyle = `rgba(255, 255, 255, ${lightIntensity * 1.6})`;
         bubbleCtx.fill();
         
-        // 6. 左下角二次環境反光
         bubbleCtx.beginPath();
         bubbleCtx.ellipse(p.x + radiusX * 0.4, p.y + radiusY * 0.4, radiusX * 0.2, radiusY * 0.1, -Math.PI / 4, 0, Math.PI * 2);
         bubbleCtx.fillStyle = `rgba(56, 189, 248, ${lightIntensity * 0.3})`;
@@ -220,12 +218,10 @@ function updateExplosionAnimation() {
         return true;
     });
     
-    // 👑 修正核心：在 filter 結束後，將分裂出來的小氣泡安全地合併回主陣列中
     if (newSplittedBubbles.length > 0) {
         backgroundBubbles.push(...newSplittedBubbles);
     }
     
-    // 渲染正確點擊時的粒子
     explosionParticles = explosionParticles.filter(p => {
         p.x += p.vx; p.y += p.vy; p.vy -= 0.04; p.life -= p.decay;
         if (p.life <= 0) return false;
@@ -243,7 +239,6 @@ function updateExplosionAnimation() {
     
     animationFrameId = requestAnimationFrame(updateExplosionAnimation);
 }
-
 
 // === 輔助防退化觸控 ===
 function bindElderTouch(element, callback) {
@@ -536,6 +531,10 @@ function initGame() {
             bindElderTouch(seqBtn, () => {
                 let correctNextValue = sortedNumbers[nextExpectedIndex];
                 if (num === correctNextValue) {
+                    if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer);
+
+                    // 👑 點對順序：播放啵啵音效與粒子特效
+                    playPlinkSound(); 
                     const rect = seqBtn.getBoundingClientRect();
                     createExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
 
@@ -565,12 +564,15 @@ function initGame() {
     updateCarouselDisplay();
 }
 
+// 處理圖形模式與顏色模式的點擊
 function handleItemClick(element, isTarget, scoreReward) {
     if (element.classList.contains('eliminated') || element.classList.contains('shake')) return;
 
     if (isTarget) {
         if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer);
         
+        // 👑 點對正確圖形/顏色：播放啵啵音效與粒子特效
+        playPlinkSound(); 
         const rect = element.getBoundingClientRect();
         createExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
 
@@ -590,10 +592,13 @@ function handleItemClick(element, isTarget, scoreReward) {
     }
 }
 
+// 處理心算模式的點擊
 function handleMathGridSelection(clickedBtn, isCorrect) {
     if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer); 
 
     if (isCorrect) {
+        // 👑 點對心算答案：播放啵啵音效與粒子特效
+        playPlinkSound(); 
         const rect = clickedBtn.getBoundingClientRect();
         createExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
 
@@ -613,29 +618,29 @@ function handleMathGridSelection(clickedBtn, isCorrect) {
     }
 }
 
-// 👑 精準修正：觸發發呆或多次答錯時，霓虹燈流動與正確答案閃爍【同步開啟與關閉】
+// 👑 精準同步：當觸發發呆或多次答錯時，霓虹流動跑馬燈與正確答案閃爍【同步開啟 1.5 秒】
 function flashAllCorrectAnswersOnce() {
     const playArea = document.getElementById('play-area');
     let mode = getRoundMode(currentLevel);
     let targets = [];
 
-    // 1. 同步開啟：九宮格網格的外圍霓虹跑馬燈
+    // 1. 同步開啟：九宮格網格四周外圍的霓虹跑馬燈特效
     if (playArea) {
         playArea.classList.remove('neon-run-hint');
-        void playArea.offsetWidth; // 強制重繪，確保動畫重置
-        playArea.classList.add('neon-run-hint');
+        void playArea.offsetWidth; // 強制瀏覽器重繪以重新觸發 CSS 動畫
+        playArea.add('neon-run-hint');
         
-        // 1.5 秒後與按鈕同步移除，維持畫面乾淨
+        // 與內部閃爍同步，在 1.5 秒後徹底將特效 Class 卸載
         setTimeout(() => {
             playArea.classList.remove('neon-run-hint');
         }, 1500);
     }
 
-    // 2. 找出目前關卡對應的正確答案按鈕
+    // 2. 依照當前模式篩選出正確答案的按鈕 DOM 物件
     if (mode === 'SEQUENCE') {
         let remainingBtns = Array.from(document.querySelectorAll('.seq-btn[data-val]'));
         if (remainingBtns.length > 0) {
-            // 排序找出剩餘數字中最小的那一個（即接下來該點的正確答案）
+            // 排序並只點亮接下來需要點擊的最小數字
             remainingBtns.sort((a, b) => parseInt(a.getAttribute('data-val')) - parseInt(b.getAttribute('data-val')));
             targets = [remainingBtns[0]]; 
         }
@@ -644,10 +649,10 @@ function flashAllCorrectAnswersOnce() {
                        .filter(el => !el.classList.contains('eliminated'));
     }
 
-    // 3. 同步開啟：內部正確按鈕的閃爍提示
+    // 3. 同步開啟：內部正確答案按鈕本身的發光閃爍
     targets.forEach(targetBtn => {
         targetBtn.classList.remove('flash-hint');
-        void targetBtn.offsetWidth; // 強制重繪
+        void targetBtn.offsetWidth; 
         targetBtn.classList.add('flash-hint');
         
         // 1.5 秒後同步移除閃爍效果
@@ -656,7 +661,7 @@ function flashAllCorrectAnswersOnce() {
         }, 1500);
     });
 
-    // 重新部署下一輪的 5 秒發呆計時
+    // 重新開始下一輪的 5 秒發呆偵測
     startGlobalIdleHintTimeout();
 }
 
