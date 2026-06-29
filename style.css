@@ -318,35 +318,60 @@
    📱 平板電腦（Tablet）響應式優化：靈活適應橫向與縱向
    ========================================================================== */
 
-/* 1. 當平板是【縱向拿持 Portrait】或螢幕寬度小於 1024px 時 */
+/* ==========================================================================
+   📱 平板電腦縱向（Portrait）防重疊排版優化
+   ========================================================================== */
 @media (max-width: 1024px) and (orientation: portrait) {
+    /* 1. 調整主容器，改用 flex 比例分配，不強行撐大 */
     #main-container {
-        flex-direction: column; /* 改為上下並排 */
-        align-items: center;
-        padding: 12px 16px;
-        gap: 16px;
-        height: auto;
+        flex-direction: column; /* 上下並排 */
+        align-items: stretch;
+        padding: 10px 16px;
+        gap: 12px;
+        height: calc(100vh - 110px); /* 👑 核心：動態扣除頂部 target-bar 的高度，鎖定總高 */
+        min-height: 0;
     }
 
-    /* 左側遊玩區：寬度填滿，高度固定，避免按鈕擠壓 */
+    /* 2. 縮小上方的遊玩區：降低高度，防止往下擠壓地圖 */
     #play-area {
         width: 100%;
-        height: 380px; 
-        padding: 14px;
+        height: 260px; /* 👑 從原本的 380px 大幅降到 260px，給下方留出生路 */
+        min-height: 260px;
+        padding: 10px;
+        gap: 8px; /* 縮小小格子之間的間距 */
     }
 
-    /* 右側藍圖區：寬度填滿，留出足夠垂直空間顯示底圖 */
+    /* 3. 放下方的藍圖區：讓它自動吃掉剩餘的所有垂直空間 */
     #construction-yard {
         width: 100%;
-        height: 480px; /* 給予畫布充足的高度展現 32 區迷霧 */
+        flex: 1; /* 👑 關鍵：自動填滿剩下的空間，絕對不會再被疊加 */
+        min-height: 0; /* 允許隨螢幕高度縮小 */
+        border: 2px solid #34d399;
+        display: flex;
+        flex-direction: column;
     }
 
-    /* 稍微縮小按鈕文字，確保在小平板畫面上不會溢出 */
-    .shape-box, .num-btn, .seq-btn {
-        font-size: 26px; 
+    /* 4. 確保內部的等角網格 wrapper 在地圖範圍內乖乖縮放 */
+    #iso-canvas-wrapper {
+        flex: 1;
+        min-height: 0;
+    }
+
+    /* 5. 稍微縮小格子內形狀/文字的 Padding，讓它在 260px 的有限高度內完美置中 */
+    .shape-box {
+        padding: 4px; 
+    }
+    .shape-box svg {
+        max-width: 75%; /* 防止形狀撐破小格子 */
+        max-height: 75%;
+    }
+    
+    /* 數字模式字型微調，配合縮小的格子 */
+    .num-btn {
+        font-size: 38px !important;
     }
     .seq-btn {
-        font-size: 34px !important;
+        font-size: 42px !important;
     }
 }
 
