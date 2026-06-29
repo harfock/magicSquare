@@ -74,8 +74,8 @@ function spawnAmbientBubble() {
         
         // 👑 果凍形變參數
         squishPhase: Math.random() * Math.PI * 2,
-        squishSpeed: Math.random() * 0.08 + 0.05, // 抖動頻率
-        squishAmount: isHuge ? 0.08 : 0.04,        // 大氣泡抖動幅度更明顯
+        squishSpeed: Math.random() * 0.08 + 0.05, 
+        squishAmount: isHuge ? 0.08 : 0.04,        
         
         wobbleAngle: Math.random() * Math.PI,
         depthFactor: isHuge ? 0.6 : Math.random() * 0.4 + 0.4, 
@@ -85,43 +85,47 @@ function spawnAmbientBubble() {
 
 // 👑 核心優化：大氣泡到達指定高度後，瞬間炸裂成大量細密小氣泡
 function splitBubble(parentBubble) {
-    // 根據原本大氣泡的尺寸，動態決定碎裂出的小氣泡數量（大氣泡碎掉時會產生大量微型氣泡，約 12~22 個）
-    const spawnCount = Math.floor(Math.random() * 10) + 12;
-    
-    // 計算大氣泡當前的平均半徑，讓小氣泡散佈在原本大氣泡的圓周範圍內
+    const spawnCount = Math.floor(Math.random() * 10) + 12; // 產生 12~22 個微型氣泡
     const currentRadius = parentBubble.size;
 
     for (let i = 0; i < spawnCount; i++) {
-        // 隨機擴散角度
         const angle = Math.random() * Math.PI * 2;
-        // 👑 爆裂時的向外衝擊力：讓小氣泡有從中心向外彈開的爆破視覺感
-        const blastSpeed = Math.random() * 3.5 + 1.5; 
+        const blastSpeed = Math.random() * 3.5 + 1.5; // 向外炸開的力道
         
-        // 讓小氣泡隨機分佈在原大氣泡身體的內部各處
         const offsetX = (Math.random() - 0.5) * currentRadius;
         const offsetY = (Math.random() - 0.5) * currentRadius;
 
         backgroundBubbles.push({
             x: parentBubble.x + offsetX,
             y: parentBubble.y + offsetY,
-            
-            // 👑 物理慣性：繼承大氣泡原本向右上游動的速度(p.vx, p.vy)，並疊加向外炸開的衝擊力
             vx: parentBubble.vx + Math.cos(angle) * blastSpeed,
-            vy: parentBubble.vy + Math.sin(angle) * blastSpeed - 0.8, // 額外給予一股向上的浮力
-            
-            // 👑 尺寸大瘦身：分裂出來的小氣泡要非常細密（1.5px 到 5px），才能襯托出之前的「巨大」
-            size: Math.random() * 3.5 + 1.5, 
-            isHuge: false, // 變回微型氣泡
-            
-            // 小氣泡在水中游動時的高頻微幅抖動
+            vy: parentBubble.vy + Math.sin(angle) * blastSpeed - 0.8, // 疊加向上浮力
+            size: Math.random() * 3.5 + 1.5, // 細密小氣泡 1.5px ~ 5px
+            isHuge: false, 
             squishPhase: Math.random() * Math.PI,
-            squishSpeed: Math.random() * 0.2 + 0.15, // 頻率極快
+            squishSpeed: Math.random() * 0.2 + 0.15, 
             squishAmount: 0.02,
-            
             wobbleAngle: Math.random() * Math.PI,
-            // 讓碎裂出的小氣泡看起來更閃亮、透光度更高
             depthFactor: parentBubble.depthFactor * 1.4, 
-            splitY: -999 // 這些細小氣泡不會再次分裂
+            splitY: -999 // 標記為分裂後的小氣泡，防止無限分裂
+        });
+    }
+}
+
+// 點擊正確時的粒子爆炸
+function createExplosion(x, y) {
+    if (!bubbleCtx) return;
+    const count = 14; 
+    for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 5 + 2; 
+        explosionParticles.push({
+            x: x, y: y,
+            vx: Math.cos(angle) * speed + 0.5,
+            vy: Math.sin(angle) * speed - 1.0,
+            size: Math.random() * 7 + 3,
+            life: 1.0,
+            decay: Math.random() * 0.025 + 0.015
         });
     }
 }
@@ -131,78 +135,83 @@ function updateExplosionAnimation() {
     if (!bubbleCtx) return;
     bubbleCtx.clearRect(0, 0, bubbleCanvas.width, bubbleCanvas.height);
     
-    if (backgroundBubbles.length < 35 && Math.random() < 0.04) {
+    // 生成環境氣泡
+    if (backgroundBubbles.length < 45 && Math.random() < 0.04) {
         spawnAmbientBubble();
     }
     
-backgroundBubbles = backgroundBubbles.filter(p => {
-    // 👑 如果是小氣泡，讓它們的爆炸衝擊力隨著水阻力逐漸「減速」，並回歸原本往右上飄的主流
-    if (!p.isHuge && p.splitY === -999) {
-        p.vx *= 0.94; // 橫向衝擊力每幀衰減，直到與背景水流一致
-        // 漸漸恢復深海往右上的自然漂浮速度
-        if (p.vx < 0.5) p.vx = Math.random() * 0.8 + 0.4; 
-    }
-
-    p.x += p.vx;
-    p.y += p.vy;
+    // 👑 修正核心：建立一個暫存陣列，用來存放這一訊框內被分裂出來的小氣泡
+    let newSplittedBubbles = [];
     
-    // 以下原本的 3D 繪製邏輯保持不變 ...
+    backgroundBubbles = backgroundBubbles.filter(p => {
+        // 👑 物理修復：如果它是剛炸裂出來的小氣泡，施加海水水阻（Friction）讓它減速，才會形成成群漂浮感
+        if (!p.isHuge && p.splitY === -999) {
+            p.vx *= 0.92; // 橫向速度快速衰減
+            p.vy *= 0.96; // 縱向爆炸力衰減
+            // 逐漸平穩，回歸正常深海向上漂浮的微速
+            if (p.vy > -0.5) p.vy = -(Math.random() * 1.0 + 0.6);
+        }
+
+        p.x += p.vx;
+        p.y += p.vy;
         
         // 1. 水流引起的左右蛇行
         p.wobbleAngle += 0.015;
         p.x += Math.sin(p.wobbleAngle) * 0.2;
         
+        // 邊界檢查
         if (p.y < -p.size * 2 || p.x > bubbleCanvas.width + p.size * 2) return false;
         
+        // 👑 修正核心：大氣泡到位置時，把產生的小氣泡推入暫存區，然後移除大氣泡
         if (p.isHuge && p.y <= p.splitY) {
+            // 這裡不直接 push 到 backgroundBubbles 避免干擾目前的 filter
+            const tempLengthBefore = backgroundBubbles.length;
             splitBubble(p);
-            return false;
+            // 把剛剛 splitBubble 新加進陣列尾端的那些小氣泡抽出來放到暫存區
+            let splitted = backgroundBubbles.splice(tempLengthBefore);
+            newSplittedBubbles.push(...splitted);
+            return false; // 移除大氣泡
         }
         
-        // 👑 2. 計算流體動態形變 (果凍上下左右擠壓效果)
+        // 2. 計算流體動態形變
         p.squishPhase += p.squishSpeed;
-        // 根據相位計算當前橫向與縱向的縮放比例
         let radiusX = p.size * (1 + Math.sin(p.squishPhase) * p.squishAmount);
         let radiusY = p.size * (1 - Math.sin(p.squishPhase) * p.squishAmount);
         
-        // 3. 環境光度計算（越接近右上方陽光處越透亮）
+        // 3. 環境光度計算
         let yProgress = 1 - (p.y / bubbleCanvas.height); 
         let xProgress = p.x / bubbleCanvas.width;
         let lightIntensity = (0.2 + (yProgress * 0.5) + (xProgress * 0.2)) * p.depthFactor;
         if (lightIntensity > 1) lightIntensity = 1;
         
-        // 👑 4. 動態 3D 光影矩陣：高光點隨氣泡在螢幕的位置發生「透視位移」
-        // 氣泡越往右上走，高光越往右上方邊緣靠攏，模擬真實折射
+        // 4. 動態 3D 光影矩陣
         let highlightX = p.x - radiusX * (0.3 - xProgress * 0.15);
         let highlightY = p.y - radiusY * (0.3 + yProgress * 0.15);
         
-        // 繪製主體漸層 (使用變形後的半徑)
+        // 繪製主體漸層
         bubbleCtx.beginPath();
-        // 使用 ellipse 代替正圓 arc 實現流體變形
         bubbleCtx.ellipse(p.x, p.y, radiusX, radiusY, 0, 0, Math.PI * 2);
         
         let gradient = bubbleCtx.createRadialGradient(
             highlightX, highlightY, p.size * 0.02,
             p.x, p.y, p.size
         );
-        // 水晶折射：核心近乎完全透明(0.02)，邊緣因為菲涅爾效應反射出強烈藍綠波光
         gradient.addColorStop(0, `rgba(255, 255, 255, ${lightIntensity * 1.3})`); 
         gradient.addColorStop(0.15, `rgba(186, 230, 253, ${lightIntensity * 0.5})`); 
-        gradient.addColorStop(0.6, `rgba(14, 165, 233, ${lightIntensity * 0.15})`); // 中心半透明看穿背景
-        gradient.addColorStop(0.9, `rgba(2, 132, 199, ${lightIntensity * 0.6})`);  // 邊緣折射深藍
+        gradient.addColorStop(0.6, `rgba(14, 165, 233, ${lightIntensity * 0.15})`); 
+        gradient.addColorStop(0.9, `rgba(2, 132, 199, ${lightIntensity * 0.6})`);  
         gradient.addColorStop(1, `rgba(3, 105, 161, 0)`);
         
         bubbleCtx.fillStyle = gradient;
         bubbleCtx.fill();
         
-        // 👑 5. 精緻的 3D 立體弧形高光點 (Specular Sparkle)
-        // 這不是一個死板的小圓圈，而是一個貼合氣泡弧度的微弱月牙狀或亮點
+        // 5. 精緻的 3D 立體弧形高光點
         bubbleCtx.beginPath();
         bubbleCtx.ellipse(highlightX, highlightY, radiusX * 0.15, radiusY * 0.12, Math.PI / 4, 0, Math.PI * 2);
         bubbleCtx.fillStyle = `rgba(255, 255, 255, ${lightIntensity * 1.6})`;
         bubbleCtx.fill();
         
-        // 👑 6. 左下角二次環境反光 (來自海底或周遭水流散射)
+        // 6. 左下角二次環境反光
         bubbleCtx.beginPath();
         bubbleCtx.ellipse(p.x + radiusX * 0.4, p.y + radiusY * 0.4, radiusX * 0.2, radiusY * 0.1, -Math.PI / 4, 0, Math.PI * 2);
         bubbleCtx.fillStyle = `rgba(56, 189, 248, ${lightIntensity * 0.3})`;
@@ -211,7 +220,12 @@ backgroundBubbles = backgroundBubbles.filter(p => {
         return true;
     });
     
-    // 渲染正確點擊時的粒子 (同樣優化為流體感)
+    // 👑 修正核心：在 filter 結束後，將分裂出來的小氣泡安全地合併回主陣列中
+    if (newSplittedBubbles.length > 0) {
+        backgroundBubbles.push(...newSplittedBubbles);
+    }
+    
+    // 渲染正確點擊時的粒子
     explosionParticles = explosionParticles.filter(p => {
         p.x += p.vx; p.y += p.vy; p.vy -= 0.04; p.life -= p.decay;
         if (p.life <= 0) return false;
@@ -522,7 +536,6 @@ function initGame() {
             bindElderTouch(seqBtn, () => {
                 let correctNextValue = sortedNumbers[nextExpectedIndex];
                 if (num === correctNextValue) {
-                    // 👑 點擊正確：獲取當前按鈕中心點，觸發 3D 氣泡碎裂
                     const rect = seqBtn.getBoundingClientRect();
                     createExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
 
@@ -558,7 +571,6 @@ function handleItemClick(element, isTarget, scoreReward) {
     if (isTarget) {
         if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer);
         
-        // 👑 點擊正確：獲取元件中心點，觸發 3D 氣泡碎裂
         const rect = element.getBoundingClientRect();
         createExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
 
@@ -582,7 +594,6 @@ function handleMathGridSelection(clickedBtn, isCorrect) {
     if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer); 
 
     if (isCorrect) {
-        // 👑 點擊正確：獲取元件中心點，觸發 3D 氣泡碎裂
         const rect = clickedBtn.getBoundingClientRect();
         createExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
 
@@ -728,7 +739,7 @@ if (continueBtn) {
 
 // 啟動與環境初始化
 document.addEventListener('DOMContentLoaded', () => {
-    initBubbleCanvas(); // 👑 初始化氣泡畫布
+    initBubbleCanvas(); 
     createBaseMesh();
     renderThumbBadges();
     initGame();
