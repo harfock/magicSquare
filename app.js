@@ -83,25 +83,45 @@ function spawnAmbientBubble() {
     });
 }
 
+// 👑 核心優化：大氣泡到達指定高度後，瞬間炸裂成大量細密小氣泡
 function splitBubble(parentBubble) {
-    const spawnCount = Math.floor(Math.random() * 6) + 8;
+    // 根據原本大氣泡的尺寸，動態決定碎裂出的小氣泡數量（大氣泡碎掉時會產生大量微型氣泡，約 12~22 個）
+    const spawnCount = Math.floor(Math.random() * 10) + 12;
+    
+    // 計算大氣泡當前的平均半徑，讓小氣泡散佈在原本大氣泡的圓周範圍內
+    const currentRadius = parentBubble.size;
+
     for (let i = 0; i < spawnCount; i++) {
+        // 隨機擴散角度
         const angle = Math.random() * Math.PI * 2;
-        const scatterSpeed = Math.random() * 1.5 + 1; 
-        const size = Math.random() * 5 + 3;
+        // 👑 爆裂時的向外衝擊力：讓小氣泡有從中心向外彈開的爆破視覺感
+        const blastSpeed = Math.random() * 3.5 + 1.5; 
+        
+        // 讓小氣泡隨機分佈在原大氣泡身體的內部各處
+        const offsetX = (Math.random() - 0.5) * currentRadius;
+        const offsetY = (Math.random() - 0.5) * currentRadius;
+
         backgroundBubbles.push({
-            x: parentBubble.x,
-            y: parentBubble.y,
-            vx: parentBubble.vx + Math.cos(angle) * scatterSpeed,
-            vy: parentBubble.vy + Math.sin(angle) * scatterSpeed - 0.3,
-            size: size,
-            isHuge: false,
+            x: parentBubble.x + offsetX,
+            y: parentBubble.y + offsetY,
+            
+            // 👑 物理慣性：繼承大氣泡原本向右上游動的速度(p.vx, p.vy)，並疊加向外炸開的衝擊力
+            vx: parentBubble.vx + Math.cos(angle) * blastSpeed,
+            vy: parentBubble.vy + Math.sin(angle) * blastSpeed - 0.8, // 額外給予一股向上的浮力
+            
+            // 👑 尺寸大瘦身：分裂出來的小氣泡要非常細密（1.5px 到 5px），才能襯托出之前的「巨大」
+            size: Math.random() * 3.5 + 1.5, 
+            isHuge: false, // 變回微型氣泡
+            
+            // 小氣泡在水中游動時的高頻微幅抖動
             squishPhase: Math.random() * Math.PI,
-            squishSpeed: Math.random() * 0.15 + 0.1, // 小氣泡抖動極快
-            squishAmount: 0.03,
+            squishSpeed: Math.random() * 0.2 + 0.15, // 頻率極快
+            squishAmount: 0.02,
+            
             wobbleAngle: Math.random() * Math.PI,
-            depthFactor: parentBubble.depthFactor * 1.2,
-            splitY: -999
+            // 讓碎裂出的小氣泡看起來更閃亮、透光度更高
+            depthFactor: parentBubble.depthFactor * 1.4, 
+            splitY: -999 // 這些細小氣泡不會再次分裂
         });
     }
 }
@@ -115,9 +135,18 @@ function updateExplosionAnimation() {
         spawnAmbientBubble();
     }
     
-    backgroundBubbles = backgroundBubbles.filter(p => {
-        p.x += p.vx;
-        p.y += p.vy;
+backgroundBubbles = backgroundBubbles.filter(p => {
+    // 👑 如果是小氣泡，讓它們的爆炸衝擊力隨著水阻力逐漸「減速」，並回歸原本往右上飄的主流
+    if (!p.isHuge && p.splitY === -999) {
+        p.vx *= 0.94; // 橫向衝擊力每幀衰減，直到與背景水流一致
+        // 漸漸恢復深海往右上的自然漂浮速度
+        if (p.vx < 0.5) p.vx = Math.random() * 0.8 + 0.4; 
+    }
+
+    p.x += p.vx;
+    p.y += p.vy;
+    
+    // 以下原本的 3D 繪製邏輯保持不變 ...
         
         // 1. 水流引起的左右蛇行
         p.wobbleAngle += 0.015;
