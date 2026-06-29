@@ -42,7 +42,7 @@ function initAudioPool() {
     if (isAudioInitialized) return;
     try {
         // 當使用者產生第一次真實互動時，瀏覽器才會允許建立並加載這 5 個音效物件
-        audioPool = Array.from({ length: 5 }, () => new Audio(BUBBBLE_SOUND_URL));
+        audioPool = Array.from({ length: 5 }, () => new Audio(BUBBLE_SOUND_URL));
         isAudioInitialized = true;
         console.log("🔊 啵啵音效 Pool 安全初始化成功！");
     } catch (e) {
@@ -51,15 +51,16 @@ function initAudioPool() {
 }
 
 function playPlinkSound() {
-    // 雙重保障：萬一觸控事件沒觸發到，點擊正確答案時立刻補初始化
     if (!isAudioInitialized) initAudioPool();
     
     try {
         if (audioPool.length === 0) return;
         const sound = audioPool[poolIndex];
-        sound.currentTime = 0; // 倒帶回最前端，確保高頻率連續點擊不卡頓
-        sound.play().catch(err => console.log("音效播放提示: 需等用戶點擊網頁後生效", err));
-        poolIndex = (poolIndex + 1) % audioPool.length;
+        if (sound) {
+            sound.currentTime = 0; 
+            sound.play().catch(err => console.log("音效播放提示: 需等用戶點擊網頁後生效", err));
+            poolIndex = (poolIndex + 1) % audioPool.length;
+        }
     } catch (e) {
         console.error("音效播放失敗", e);
     }
@@ -639,50 +640,59 @@ function handleMathGridSelection(clickedBtn, isCorrect) {
 
 // 👑 精準同步：當觸發發呆或多次答錯時，霓虹流動跑馬燈與正確答案閃爍【同步開啟 1.5 秒】
 function flashAllCorrectAnswersOnce() {
-    const playArea = document.getElementById('play-area');
-    let mode = getRoundMode(currentLevel);
-    let targets = [];
+    try {
+        const playArea = document.getElementById('play-area');
+        if (!playArea) return;
 
-    // 1. 同步開啟：九宮格網格四周外圍的霓虹跑馬燈特效
-    if (playArea) {
+        let mode = getRoundMode(currentLevel);
+        let targets = [];
+
+        // 1. 同步開啟：九宮格網格四周外圍的霓虹跑馬燈特效
         playArea.classList.remove('neon-run-hint');
-        void playArea.offsetWidth; // 強制瀏覽器重繪以重新觸發 CSS 動畫
-        // 👑 修正之處：使用 classList.add 確保 GitHub 部署順暢運行不噴錯
+        void playArea.offsetWidth; // 強制瀏覽器重繪，確保 CSS 特效必能觸發
         playArea.classList.add('neon-run-hint');
         
-        // 與內部閃爍同步，在 1.5 秒後徹底將特效 Class 卸載
+        // 1.5 秒後徹底將外圍霓虹特效 Class 卸載
         setTimeout(() => {
-            playArea.classList.remove('neon-run-hint');
+            if (playArea) playArea.classList.remove('neon-run-hint');
         }, 1500);
-    }
 
-    // 2. 依照當前模式篩選出正確答案的按鈕 DOM 物件
-    if (mode === 'SEQUENCE') {
-        let remainingBtns = Array.from(document.querySelectorAll('.seq-btn[data-val]'));
-        if (remainingBtns.length > 0) {
-            // 排序並只點亮接下來需要點擊的最小數字
-            remainingBtns.sort((a, b) => parseInt(a.getAttribute('data-val')) - parseInt(b.getAttribute('data-val')));
-            targets = [remainingBtns[0]]; 
+        // 2. 依照當前模式篩選出正確答案的按鈕 DOM 物件
+        if (mode === 'SEQUENCE') {
+            let remainingBtns = Array.from(document.querySelectorAll('.seq-btn[data-val]'));
+            if (remainingBtns.length > 0) {
+                // 排序並只點亮接下來需要點擊的最小數字
+                remainingBtns.sort((a, b) => {
+                    let valA = parseInt(a.getAttribute('data-val')) || 0;
+                    let valB = parseInt(b.getAttribute('data-val')) || 0;
+                    return valA - valB;
+                });
+                targets = [remainingBtns[0]]; 
+            }
+        } else {
+            targets = Array.from(document.querySelectorAll('[data-target-hint="true"]'))
+                           .filter(el => el && !el.classList.contains('eliminated'));
         }
-    } else {
-        targets = Array.from(document.querySelectorAll('[data-target-hint="true"]'))
-                       .filter(el => !el.classList.contains('eliminated'));
-    }
 
-    // 3. 同步開啟：內部正確答案按鈕本身的發光閃爍
-    targets.forEach(targetBtn => {
-        targetBtn.classList.remove('flash-hint');
-        void targetBtn.offsetWidth; 
-        targetBtn.classList.add('flash-hint');
-        
-        // 1.5 秒後同步移除閃爍效果
-        setTimeout(() => {
+        // 3. 同步開啟：內部正確答案按鈕本身的發光閃爍
+        targets.forEach(targetBtn => {
+            if (!targetBtn) return;
             targetBtn.classList.remove('flash-hint');
-        }, 1500);
-    });
+            void targetBtn.offsetWidth; // 強制重繪
+            targetBtn.classList.add('flash-hint');
+            
+            // 1.5 秒後同步移除閃爍效果
+            setTimeout(() => {
+                if (targetBtn) targetBtn.classList.remove('flash-hint');
+            }, 1500);
+        });
 
-    // 重新開始下一輪的 5 秒發呆偵測
-    startGlobalIdleHintTimeout();
+    } catch (error) {
+        console.error("提示動畫執行出錯，已自動攔截避免卡死:", error);
+    } finally {
+        // 重新開始下一輪的 5 秒發呆偵測，確保提示循環不會斷掉
+        startGlobalIdleHintTimeout();
+    }
 }
 
 function startGlobalIdleHintTimeout() {
