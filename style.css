@@ -114,7 +114,7 @@ body {
 }
 
 /* ==========================================================================
-   🎮 主遊戲核心佈局區域
+   🎮 主遊戲核心佈局區域 (電腦與大螢幕基礎預設)
    ========================================================================== */
 #main-container {
     flex: 1;
@@ -124,7 +124,6 @@ body {
     min-height: 0;
 }
 
-/* --- 左側遊玩區基礎設定 --- */
 #play-area {
     display: grid;
     background: var(--panel-bg);
@@ -137,13 +136,11 @@ body {
     gap: 12px;
 }
 
-/* 遊戲模式網格結構 */
 .grid-shape-mode { grid-template-columns: repeat(4, 1fr); }
 .grid-math-mode { grid-template-columns: repeat(3, 1fr); }
 .grid-color-mode { grid-template-columns: repeat(4, 1fr); }
 .grid-sequence-mode { grid-template-columns: repeat(3, 1fr); }
 
-/* --- 核心按鈕與巨型數字視覺 --- */
 .shape-box, .num-btn, .seq-btn, .color-btn {
     width: 100%;
     aspect-ratio: 1 / 1; 
@@ -206,7 +203,6 @@ body {
     transform: scale(0.95);
 }
 
-/* --- 右側藍圖故事區基礎設定 --- */
 #construction-yard {
     background-size: 100% 100%;
     background-position: center center;
@@ -221,18 +217,19 @@ body {
     overflow: hidden;
 }
 
-/* 👑 清除標題長度與排版限制，允許文字完美呈現 */
+/* 👑 清除所有長度限制，允許標題文字完美且完整地展開 */
 #yard-title {
     background: rgba(15, 23, 42, 0.85);
-    padding: 10px 20px;
+    padding: 12px 20px;
     font-size: 16px;
     font-weight: bold;
     border-bottom: 2px solid rgba(52, 211, 153, 0.3);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     color: var(--accent-emerald);
-    white-space: nowrap; /* 確保長標題不換行 */
-    overflow: visible;   /* 移除截斷 */
+    white-space: normal;  /* 允許自動換行或自然延伸 */
+    overflow: visible;    /* 絕不截斷 */
+    text-overflow: clip;  /* 清除縮寫點點點 */
     width: 100%;
 }
 
@@ -337,40 +334,48 @@ body {
 
 
 /* ==========================================================================
-   📱 螢幕方向精準自適應（不再依賴 px 寬度，徹底根治翻轉錯誤）
+   📱 螢幕方向絕對精準切換（徹底根治 4:3 平板橫向拉扯穿幫問題）
    ========================================================================== */
 
-/* ─── 🔄 情況 A：當平板是【橫向拿持 Landscape】執行「左右設計」─── */
+/* ─── 🔄 情況 A：當偵測到螢幕是【橫向 Landscape】強制啟用完美左右排版 ─── */
 @media (orientation: landscape) {
     #main-container {
-        flex-direction: row; /* 👑 絕對左右並排 */
+        flex-direction: row; /* 強制左右並排 */
         align-items: center; 
-        justify-content: space-between;
+        justify-content: center; /* 水平中央居中，左右自動產生安全空白 */
         height: calc(100vh - 80px);
+        padding: 12px 24px;
+        gap: 24px;
     }
 
+    /* 左側遊玩區：鎖定最大寬度，不再把高度撐高 */
     #play-area {
-        width: 35%; /* 給左邊合理的寬度比例 */
+        width: 35%;
+        max-width: 400px;
         height: auto;
+        padding: 12px;
+        gap: 10px;
     }
 
-    /* 👑 橫向時，解除所有高度與寬度限制，讓藍圖地圖 100% 完全展開 */
+    /* 👑 核心修正：右側藍圖區。在 4:3 高度受限的平板橫向，絕對不能用 height: 100%！
+       我們同樣用 aspect-ratio: 2 / 1 將地圖比例死死扣住！ */
     #construction-yard {
-        width: 62%; 
-        height: 100%; 
-        flex: 1;
-        aspect-ratio: auto; /* 移除直向時的固定比例鎖，全面拉滿螢幕 */
+        width: 55%; 
+        max-width: 600px;     /* 限制最大寬度 */
+        aspect-ratio: 2 / 1;  /* 👑 強制維持 8x4 網格的完美 2:1 長方形幾何比例 */
+        height: auto;         /* 解除高度拉伸 */
+        flex: none;           /* 拒絕讓瀏覽器彈性拉扯高度 */
     }
 
-    .num-btn { font-size: 42px !important; }
-    .seq-btn { font-size: 48px !important; }
+    .num-btn { font-size: 38px !important; }
+    .seq-btn { font-size: 44px !important; }
     #game-instruction { font-size: 24px; }
 }
 
-/* ─── 🔄 情況 B：當平板是【直向拿持 Portrait】執行「上下設計」─── */
+/* ─── 🔄 情況 B：當偵測到螢幕是【直向 Portrait】強制啟用完美上下排版 ─── */
 @media (orientation: portrait) {
     #main-container {
-        flex-direction: column; /* 👑 絕對上下堆疊 */
+        flex-direction: column; /* 強制上下堆疊 */
         align-items: center; 
         justify-content: flex-start;
         height: calc(100vh - 80px);
@@ -381,17 +386,17 @@ body {
     /* 遊玩區收攏在中央，左右留白 */
     #play-area {
         width: 90%; 
-        max-width: 460px; 
+        max-width: 440px; 
         height: auto;
         padding: 12px;
         gap: 8px;
     }
 
-    /* 藍圖地圖區在下方維持精緻的等比長方形，防止把九宮格頂上去 */
+    /* 藍圖地圖區在下方維持精緻的 2:1 長方形，防止上彈 */
     #construction-yard {
         width: 90%; 
-        max-width: 460px; 
-        aspect-ratio: 2 / 1; /* 8x4 網格的完美 2:1 比例 */
+        max-width: 440px; 
+        aspect-ratio: 2 / 1; /* 確保直向也是完美的 2:1 比例 */
         height: auto;
         flex: none; 
     }
