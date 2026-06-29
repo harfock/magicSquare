@@ -357,9 +357,18 @@ body {
         transform: scale(1.08); /* 稍微放大，增強長輩視覺吸引力 */
     }
 }
+/* 網格四周外圍的霓虹跑馬燈提示 */
+.neon-run-hint {
+    box-shadow: 0 0 20px #34D399, inset 0 0 15px #34D399;
+    transition: all 0.3s ease;
+}
 /* 👑 1秒內快速閃爍 5 次 */
-.flash-hint { animation: flashHint 0.2s ease-in-out 5; }
+.flash-hint { animation: elder-pulse-hint 0.5s ease-in-out infinite alternate;}
 
+@keyframes elder-pulse-hint {
+    0% { transform: scale(1); box-shadow: 0 0 8px #FCD34D; }
+    100% { transform: scale(1.08); box-shadow: 0 0 25px #FCD34D; background-color: rgba(252, 211, 77, 0.3); }
+}
 
 /* ==========================================================================
    📱 螢幕方向絕對精準自適應（配合 5x5 正方形藍圖全面優化）
