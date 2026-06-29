@@ -114,7 +114,7 @@ body {
 }
 
 /* ==========================================================================
-   🎮 主遊戲核心佈局區域 (電腦與大螢幕基礎預設)
+   🎮 主遊戲核心佈局區域
    ========================================================================== */
 #main-container {
     flex: 1;
@@ -217,7 +217,6 @@ body {
     overflow: hidden;
 }
 
-/* 👑 清除所有長度限制，允許標題文字完美且完整地展開 */
 #yard-title {
     background: rgba(15, 23, 42, 0.85);
     padding: 12px 20px;
@@ -227,9 +226,9 @@ body {
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     color: var(--accent-emerald);
-    white-space: normal;  /* 允許自動換行或自然延伸 */
-    overflow: visible;    /* 絕不截斷 */
-    text-overflow: clip;  /* 清除縮寫點點點 */
+    white-space: normal;  
+    overflow: visible;    
+    text-overflow: clip;  
     width: 100%;
 }
 
@@ -334,48 +333,47 @@ body {
 
 
 /* ==========================================================================
-   📱 螢幕方向絕對精準切換（徹底根治 4:3 平板橫向拉扯穿幫問題）
+   📱 螢幕方向絕對精準切換（平衡 50:50 寬度比，解決高壓縮截斷）
    ========================================================================== */
 
-/* ─── 🔄 情況 A：當偵測到螢幕是【橫向 Landscape】強制啟用完美左右排版 ─── */
+/* ─── 🔄 情況 A：當偵測到螢幕是【橫向 Landscape】─── */
 @media (orientation: landscape) {
     #main-container {
-        flex-direction: row; /* 強制左右並排 */
+        flex-direction: row; 
         align-items: center; 
-        justify-content: center; /* 水平中央居中，左右自動產生安全空白 */
+        justify-content: center; /* 讓兩者在螢幕中央居中 */
         height: calc(100vh - 80px);
-        padding: 12px 24px;
-        gap: 24px;
+        padding: 16px 24px;
+        gap: 32px; /* 拉大中間間距，讓排版更和諧 */
     }
 
-    /* 左側遊玩區：鎖定最大寬度，不再把高度撐高 */
+    /* 🧱 左側遊玩區：調整寬度，與右邊對等平衡 */
     #play-area {
-        width: 35%;
-        max-width: 400px;
+        width: 46%; /* 👑 逼近 50:50 比例 */
+        max-width: 480px;
         height: auto;
-        padding: 12px;
-        gap: 10px;
+        padding: 16px;
     }
 
-    /* 👑 核心修正：右側藍圖區。在 4:3 高度受限的平板橫向，絕對不能用 height: 100%！
-       我們同樣用 aspect-ratio: 2 / 1 將地圖比例死死扣住！ */
+    /* 🗺️ 右側藍圖區：限制寬度至 46%，通過幾何比例聯動縮減高度，防溢出 */
     #construction-yard {
-        width: 55%; 
-        max-width: 600px;     /* 限制最大寬度 */
-        aspect-ratio: 2 / 1;  /* 👑 強制維持 8x4 網格的完美 2:1 長方形幾何比例 */
-        height: auto;         /* 解除高度拉伸 */
-        flex: none;           /* 拒絕讓瀏覽器彈性拉扯高度 */
+        width: 46%;           /* 👑 完美與遊玩區達成對等平分 */
+        max-width: 480px;     /* 限制最大寬度，確保在超大螢幕也不失真 */
+        aspect-ratio: 2 / 1;  /* 強制維持 8x4 的精準 2:1 長方形 */
+        height: auto;         
+        flex: none;           /* 徹底禁止高度被動拉伸 */
     }
 
-    .num-btn { font-size: 38px !important; }
-    .seq-btn { font-size: 44px !important; }
-    #game-instruction { font-size: 24px; }
+    /* 調整橫向按鈕字體大小，使其大方清晰 */
+    .num-btn { font-size: 44px !important; }
+    .seq-btn { font-size: 52px !important; }
+    #game-instruction { font-size: 26px; }
 }
 
-/* ─── 🔄 情況 B：當偵測到螢幕是【直向 Portrait】強制啟用完美上下排版 ─── */
+/* ─── 🔄 情況 B：當偵測到螢幕是【直向 Portrait】─── */
 @media (orientation: portrait) {
     #main-container {
-        flex-direction: column; /* 強制上下堆疊 */
+        flex-direction: column; 
         align-items: center; 
         justify-content: flex-start;
         height: calc(100vh - 80px);
@@ -383,7 +381,6 @@ body {
         gap: 20px;
     }
 
-    /* 遊玩區收攏在中央，左右留白 */
     #play-area {
         width: 90%; 
         max-width: 440px; 
@@ -392,11 +389,10 @@ body {
         gap: 8px;
     }
 
-    /* 藍圖地圖區在下方維持精緻的 2:1 長方形，防止上彈 */
     #construction-yard {
         width: 90%; 
         max-width: 440px; 
-        aspect-ratio: 2 / 1; /* 確保直向也是完美的 2:1 比例 */
+        aspect-ratio: 2 / 1; 
         height: auto;
         flex: none; 
     }
