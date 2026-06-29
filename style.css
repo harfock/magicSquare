@@ -1,418 +1,421 @@
- * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { 
-            background-image: url('image_9.png');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            font-family: "PingFang HK", "Helvetica Neue", Helvetica, Arial, sans-serif; 
-            color: #FFFFFF; 
-            display: flex; 
-            flex-direction: column; 
-            min-height: 100vh; 
-            
-            overscroll-behavior: none;
-            touch-action: none; 
-
-            -webkit-user-select: none;  
-            -moz-user-select: none;     
-            -ms-user-select: none;      
-            user-select: none;          
-            -webkit-touch-callout: none; 
-        }
-
-        /* 頂部題目與數據欄 */
-        #target-bar { 
-            position: relative;
-            z-index: 50; 
-            padding: 10px 24px; 
-            background: rgba(15, 23, 42, 0.75);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 105px; 
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-
-        #target-left-side {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex: 1;
-        }
-
-        #game-instruction { 
-            font-size: 32px; 
-            font-weight: 900; 
-            text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-            white-space: nowrap;
-        }
-
-        #target-display { 
-            width: 65px;
-            height: 65px; 
-            background: rgba(0, 0, 0, 0.75); 
-            padding: 8px; 
-            border-radius: 14px; 
-            box-shadow: inset 0 3px 8px rgba(0,0,0,0.8);
-            border: 2px solid rgba(255,255,255,0.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            font-weight: 900;
-            color: #FCD34D;
-            text-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-
-        #target-display svg { width: 100%; height: 100%; object-fit: contain; }
-
-        .color-target-preview {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            border: 2px solid #FFFFFF;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-        }
-
-        .blink-active { animation: textBlink 0.8s ease-in-out; }
-        @keyframes textBlink {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.98); color: #FCD34D; }
-        }
-
-        #target-right-side {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end; 
-            justify-content: center;
-            gap: 8px; 
-            width: 260px; 
-            flex-shrink: 0;
-        }
-
-        #top-badge-container {
-            display: flex;
-            gap: 6px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 4px 12px;
-            border-radius: 14px;
-            border: 1.5px solid rgba(252, 211, 77, 0.4);
-            min-height: 34px;
-            align-items: center;
-            max-width: 100%;
-            overflow-x: auto; 
-        }
-
-        .thumb-badge {
-            font-size: 20px;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.25);
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-            user-select: none;
-            display: inline-block;
-        }
-        .thumb-badge:hover { transform: scale(1.25); filter: drop-shadow(0 0 8px #FCD34D); }
-        .thumb-badge:active { transform: scale(0.9); }
-
-        #dashboard-carousel {
-            background: rgba(15, 23, 42, 0.9); 
-            padding: 6px 14px; 
-            border-radius: 10px; 
-            border: 1px solid rgba(255, 255, 255, 0.15); 
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        }
-
-        #carousel-text {
-            font-size: 16px;
-            font-weight: 900;
-            color: #FFFFFF;
-            display: inline-block;
-            white-space: nowrap;
-        }
-
-        .fade-in-effect { animation: carouselFade 0.4s ease-out forwards; }
-        @keyframes carouselFade { 0% { opacity: 0; transform: translateY(4px); } 100% { opacity: 1; transform: translateY(0); } }
-
-        #neon-trail-container {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; opacity: 0; transition: opacity 0.5s ease;
-        }
-        #neon-trail-container.active { opacity: 1; }
-        #neon-trail-container::after {
-            content: ''; position: absolute; width: 120px; height: 6px; background: linear-gradient(90deg, transparent, #34D399, #FFFFFF); border-radius: 3px;
-            box-shadow: 0 0 10px #34D399, 0 0 20px #10B981, 0 0 30px #047857; animation: neonRunAround 6s linear infinite;
-        }
-        @keyframes neonRunAround {
-            0% { top: calc(100vh - 6px); left: 0; width: 6px; height: 120px; background: linear-gradient(180deg, #FFFFFF, #34D399, transparent); }
-            25% { top: 0; left: 0; width: 120px; height: 6px; background: linear-gradient(90deg, transparent, #34D399, #FFFFFF); }
-            50% { top: 0; left: calc(100vw - 6px); width: 6px; height: 120px; background: linear-gradient(180deg, transparent, #34D399, #FFFFFF); }
-            75% { top: calc(100vh - 6px); left: calc(100vw - 120px); width: 120px; height: 6px; background: linear-gradient(90deg, #FFFFFF, #34D399, transparent); }
-            100% { top: calc(100vh - 120px); left: 0; width: 6px; height: 120px; background: linear-gradient(180deg, #FFFFFF, #34D399, transparent); }
-        }
-
-        #main-container { flex: 1; display: flex; justify-content: space-between; align-items: stretch; padding: 15px 24px; gap: 20px; min-height: 0; }
-
-        #play-area { 
-            display: grid; width: 49%; background: rgba(15, 23, 42, 0.45); padding: 16px; border-radius: 24px;
-            border: 2px solid rgba(255,255,255,0.08); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); align-content: stretch; 
-        }
-
-        .grid-shape-mode { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap: 12px; }
-        .grid-math-mode { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 14px; }
-        .grid-color-mode { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); gap: 10px; }
-        .grid-sequence-mode { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 16px; }
-
-       /* 1. 通用按鈕基礎設定（形狀、心算數字、序列數字） */
-        .shape-box, .num-btn, .seq-btn { 
-            width: 100%; 
-            height: 100%; 
-            padding: 8px; 
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95)); 
-            border-radius: 16px; 
-            cursor: pointer; 
-            transition: all 0.15s; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            border: 2px solid rgba(255, 255, 255, 0.08); 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3); 
-            
-            /* 👑 升級：將心算模式（.num-btn）的普通數字直接放大，佔滿格子的巨型視覺 */
-            font-size: 56px; /* 👈 這裡從 32px 大幅提升，確保佔滿格子約 70% 空間 */
-            font-weight: 900; 
-            color: #FFFFFF; 
-            -webkit-user-select: none; 
-            user-select: none; 
-            -webkit-touch-callout: none; 
-            -webkit-tap-highlight-color: transparent; 
-        }
-        
-        .shape-box:hover, .num-btn:hover, .seq-btn:hover { transform: scale(1.02); border-color: rgba(255, 255, 255, 0.4); }
-        .shape-box svg { width: 100%; height: 100%; pointer-events: none; filter: url(#3d-lighting); }
-
-       /* 2. 序列模式按鈕的專屬加強（由小到大點選的數字） */
-        .seq-btn {
-            background: linear-gradient(135deg, #1E3A8A, #0D9488) !important; 
-            border: 3px solid #34D399 !important;
-            
-            /* 👑 升級：將序列模式的數字也同步放大到巨無霸級別 */
-            font-size: 64px !important; /* 👈 從 42px 提升到 64px，視覺震撼，超級清晰 */
-            font-weight: 900 !important; 
-            color: #FFFFFF !important; 
-            text-shadow: 0 3px 8px rgba(0,0,0,0.6);
-        }
-        .seq-btn.completed {
-            background: #334155 !important; border-color: #64748B !important; color: #64748B !important;
-            opacity: 0.4; pointer-events: none; transform: scale(0.95); box-shadow: none; text-shadow: none;
-        }
-
-        .color-btn {
-            width: 100%; height: 100%; border-radius: 16px; cursor: pointer; transition: all 0.15s; border: 2.5px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.4), inset 0 3px 6px rgba(255,255,255,0.5), inset 0 -4px 8px rgba(0,0,0,0.3);
-            -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
-        }
-        .color-btn:hover { transform: scale(1.04); border-color: #FFFFFF; }
-
-        @keyframes correctFlash {
-            0%, 100% { background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95)); border-color: rgba(255, 255, 255, 0.08); transform: scale(1); }
-            50% { background: #10B981; border-color: #FFFFFF; transform: scale(1.08); box-shadow: 0 0 20px #10B981; }
-        }
-        .flash-hint { animation: correctFlash 0.2s linear 5; z-index: 20; }
-
-        /* 右側探索畫布 */
-        #construction-yard {
-            width: 49%; 
-            background-size: 100% 100%; 
-            background-position: center center;
-            background-repeat: no-repeat;
-            border-radius: 24px; 
-            border: 3px solid #34d399;
-            position: relative; 
-            box-shadow: 0 12px 36px rgba(0,0,0,0.6);
-            transition: background-image 0.5s ease-in-out;
-        }
-
-        #yard-title { 
-            position: absolute; top: -12px; left: 15px; font-size: 14px; color: #FFFFFF; 
-            font-weight: bold; letter-spacing: 0.5px; z-index: 30;
-            background: rgba(15, 23, 42, 0.95); padding: 3px 12px; border-radius: 8px;
-            border: 1px solid rgba(52, 211, 153, 0.4);
-        }
-
-        #iso-canvas-wrapper { width: 100%; height: 100%; position: relative; border-radius: 20px; overflow: hidden; }
-        #iso-grid { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(4, 1fr); width: 100%; height: 100%; gap: 2px; background: transparent; }
-
-        .grid-tile { 
-            width: 100%; height: 100%; background: rgba(13, 18, 30, 0.96); border: 1px solid rgba(52, 211, 153, 0.35); 
-            display: flex; align-items: center; justify-content: center; color: rgba(52, 211, 153, 0.8); font-size: 13px; font-weight: 800;
-            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; visibility: visible;
-        }
-
-        .grid-tile.revealed { opacity: 0; transform: scale(1.4) rotate(45deg); filter: blur(12px); visibility: hidden; pointer-events: none; }
-
-        @keyframes landmarkHighlight {
-            0% { transform: scale(1); filter: brightness(1); }
-            30% { transform: scale(1.05); filter: brightness(1.4) drop-shadow(0 0 12px #34D399); }
-            70% { transform: scale(0.98); filter: brightness(1.1); }
-            100% { transform: scale(1); filter: brightness(1); }
-        }
-        .just-unlocked { animation: landmarkHighlight 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; z-index: 10; }
-
-        .eliminated { pointer-events: none; animation: complexVanish 0.7s forwards; }
-        @keyframes complexVanish { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0) rotate(360deg); opacity: 0; } }
-        
-        .shake { animation: shake 0.35s ease-in-out; border-color: #EF4444 !important; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
-
-        /* 轉場彈窗 */
-        #modal-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 18, 0.85); 
-            display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-        }
-        .modal-box { 
-            background: linear-gradient(135deg, #0284c7, #0369a1); color: #FFFFFF; padding: 25px 30px; border-radius: 20px; 
-            text-align: center; width: 90%; max-width: 480px; box-shadow: 0 20px 40px rgba(0,0,0,0.8); border: 2px solid rgba(255,255,255,0.3);
-        }
-        .modal-box h2 { font-size: 28px; font-weight: 900; }
-        .modal-box p { font-size: 18px; color: #FCD34D; margin-top: 10px; font-weight: 800; line-height: 1.4; }
-        
-        #modal-continue-btn {
-            display: none; margin: 15px auto 0 auto; padding: 10px 30px; font-size: 20px; font-weight: 900;
-            color: #FFFFFF; background: linear-gradient(135deg, #10B981, #059669); border: 2px solid #34D399;
-            border-radius: 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.15s;
-        }
-        #modal-continue-btn:hover { transform: scale(1.04); }
-
-        /* 相簿燈箱 */
-        #gallery-popup {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9);
-            display: none; justify-content: center; align-items: center; z-index: 200;
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); cursor: pointer;
-        }
-        .gallery-content {
-            position: relative; max-width: 85%; max-height: 85%; text-align: center;
-            animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15);
-        }
-        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        
-        .gallery-content img {
-            width: 100%; max-height: 70vh; object-fit: contain; border-radius: 18px;
-            border: 4px solid #FCD34D; box-shadow: 0 15px 50px rgba(0,0,0,0.8);
-        }
-        .gallery-title {
-            font-size: 26px; font-weight: 900; color: #FFFFFF; margin-top: 15px;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.8); letter-spacing: 1px;
-        }
-        .gallery-tip { font-size: 16px; color: #A7F3D0; margin-top: 5px; opacity: 0.8; }
-
-       /* ==========================================================================
-   📱 平板電腦（Tablet）響應式優化：靈活適應橫向與縱向
+/* ==========================================================================
+   🎨 遊戲核心全局設定與變數
    ========================================================================== */
+:root {
+    --bg-dark: #0f172a;
+    --panel-bg: rgba(15, 23, 42, 0.45);
+    --border-light: rgba(255, 255, 255, 0.08);
+    --text-main: #ffffff;
+    --neon-green: #4cd964;
+    --neon-blue: #5ac8fa;
+    --neon-yellow: #fcd34d;
+    --accent-emerald: #34d399;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
 
 /* ==========================================================================
-   📱 平板電腦縱向（Portrait）防重疊排版優化
+   🔝 頂部導覽列 (Target Bar)
    ========================================================================== */
+#target-bar {
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.85) 100%);
+    border-bottom: 2px solid var(--border-light);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 10;
+    height: 80px;
+}
+
+#target-left-side {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+#game-instruction {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+#target-display {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--neon-yellow);
+    box-shadow: 0 0 15px rgba(252, 211, 77, 0.3);
+    font-size: 24px;
+    font-weight: 900;
+}
+
+#target-display svg, .color-target-preview {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+}
+
+#target-right-side {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+#top-badge-container {
+    display: flex;
+    gap: 6px;
+}
+
+.thumb-badge {
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.thumb-badge:hover {
+    transform: scale(1.2);
+}
+
+#dashboard-carousel {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 8px 18px;
+    border-radius: 30px;
+    border: 1px solid rgba(255,255,255,0.1);
+    min-width: 160px;
+    text-align: center;
+}
+
+#carousel-text {
+    font-weight: bold;
+    font-size: 16px;
+    display: inline-block;
+}
+
+/* ==========================================================================
+   🎮 主遊戲核心佈局區域
+   ========================================================================== */
+#main-container {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    padding: 16px 24px;
+    gap: 20px;
+    min-height: 0;
+}
+
+/* --- 左側遊玩區 (Play Area) --- */
+#play-area {
+    display: grid;
+    width: 40%;
+    background: var(--panel-bg);
+    padding: 16px;
+    border-radius: 24px;
+    border: 2px solid var(--border-light);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    align-content: stretch;
+    gap: 12px;
+}
+
+/* 不同遊戲模式下的九宮格/多宮格結構自動適應 */
+.grid-shape-mode { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); }
+.grid-math-mode { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); }
+.grid-color-mode { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); }
+.grid-sequence-mode { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
+
+/* --- 核心按鈕與巨型數字視覺強化 --- */
+.shape-box, .num-btn, .seq-btn, .color-btn {
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.shape-box, .num-btn, .seq-btn {
+    padding: 8px;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+    border: 2px solid var(--border-light);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    font-size: 56px; /* 👑 巨型數字優化：佔滿格子約 70% 的高度 */
+    font-weight: 900;
+    color: #FFFFFF;
+}
+
+.shape-box svg {
+    width: 75%;
+    height: 75%;
+    filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.4));
+}
+
+.color-btn {
+    border: 3px solid rgba(255,255,255,0.25);
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.4);
+}
+
+.seq-btn {
+    background: linear-gradient(135deg, #1e3a8a, #0d9488) !important;
+    border: 3px solid var(--accent-emerald) !important;
+    font-size: 64px !important; /* 👑 序列模式巨型數字 */
+    text-shadow: 0 3px 8px rgba(0,0,0,0.6);
+}
+
+/* 按鈕互動特效 */
+.shape-box:active, .num-btn:active, .seq-btn:active, .color-btn:active {
+    transform: scale(0.92);
+    filter: brightness(1.2);
+}
+
+/* 狀態動畫類別 */
+.eliminated {
+    transform: scale(0);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.completed {
+    background: #059669 !important;
+    border-color: #10b981 !important;
+    opacity: 0.4;
+    pointer-events: none;
+    transform: scale(0.95);
+}
+
+/* --- 右側藍圖故事區 (Construction Yard) --- */
+#construction-yard {
+    width: 58%;
+    background-size: 100% 100%;
+    background-position: center center;
+    background-repeat: no-repeat;
+    border-radius: 24px;
+    border: 3px solid var(--accent-emerald);
+    position: relative;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.6);
+    transition: background-image 0.5s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#yard-title {
+    background: rgba(15, 23, 42, 0.85);
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-bottom: 2px solid rgba(52, 211, 153, 0.3);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: var(--accent-emerald);
+}
+
+#iso-canvas-wrapper {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+}
+
+#iso-grid {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+}
+
+.grid-tile {
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: rgba(15, 23, 42, 0.94);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.15);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.grid-tile.revealed {
+    background-color: rgba(0, 0, 0, 0) !important;
+    border-color: rgba(255, 255, 255, 0) !important;
+    color: rgba(0,0,0,0) !important;
+}
+
+/* ==========================================================================
+   🌟 特效、彈窗與燈箱系統 (Modals & Popups)
+   ========================================================================== */
+#modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.modal-box {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    padding: 32px 48px;
+    border-radius: 28px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+    border: 2px solid var(--accent-emerald);
+    max-width: 90%;
+}
+
+.modal-box h2 { font-size: 36px; color: var(--accent-emerald); margin-bottom: 16px; font-weight: 900; }
+.modal-box p { font-size: 20px; color: #cbd5e1; margin-bottom: 24px; line-height: 1.5; }
+
+#modal-continue-btn {
+    background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+    color: white; border: none; padding: 14px 36px;
+    font-size: 20px; font-weight: bold; border-radius: 16px;
+    cursor: pointer; box-shadow: 0 8px 20px rgba(52,211,153,0.3);
+}
+
+#gallery-popup {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.92);
+    display: none; align-items: center; justify-content: center;
+    z-index: 300; backdrop-filter: blur(8px);
+}
+
+.gallery-content { text-align: center; max-width: 90%; max-height: 90%; }
+#gallery-img { max-width: 85vw; max-height: 75vh; border-radius: 16px; border: 3px solid white; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+.gallery-title { font-size: 22px; font-weight: bold; margin-top: 16px; color: white; }
+.gallery-tip { font-size: 14px; color: #94a3b8; margin-top: 6px; }
+
+/* ==========================================================================
+   🧭 動畫定義 (Animations)
+   ========================================================================== */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+.shake { animation: shake 0.35s ease-in-out; }
+
+@keyframes flashHint {
+    0%, 100% { background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95)); border-color: rgba(255,255,255,0.08); }
+    50% { background: #b91c1c !important; border-color: #ef4444 !important; transform: scale(1.05); }
+}
+.flash-hint { animation: flashHint 0.4s ease-in-out 2; }
+
+@keyframes justUnlockedGlow {
+    0% { border-color: var(--accent-emerald); box-shadow: 0 0 5px rgba(52,211,153,0.3); }
+    50% { border-color: #6ee7b7; box-shadow: 0 0 25px rgba(110,231,183,0.8); }
+    100% { border-color: var(--accent-emerald); box-shadow: 0 12px 36px rgba(0,0,0,0.6); }
+}
+.just-unlocked { animation: justUnlockedGlow 1s ease-in-out 1; }
+
+.fade-in-effect { animation: fadeIn 0.4s ease-out forwards; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+
+.blink-active { animation: barBlink 0.5s ease-out 1; }
+@keyframes barBlink { 0% { opacity: 0.7; } 100% { opacity: 1; } }
+
+/* ==========================================================================
+   📱 平板電腦（Tablet）防重疊響應式優化
+   ========================================================================== */
+
+/* 1. 【縱向拿持 Portrait】模式：改為上下並排，鎖死高度防重疊 */
 @media (max-width: 1024px) and (orientation: portrait) {
-    /* 1. 調整主容器，改用 flex 比例分配，不強行撐大 */
     #main-container {
-        flex-direction: column; /* 上下並排 */
+        flex-direction: column; 
         align-items: stretch;
         padding: 10px 16px;
         gap: 12px;
-        height: calc(100vh - 110px); /* 👑 核心：動態扣除頂部 target-bar 的高度，鎖定總高 */
+        height: calc(100vh - 100px); /* 扣除頂部導覽列，鎖定視窗總高 */
         min-height: 0;
     }
 
-    /* 2. 縮小上方的遊玩區：降低高度，防止往下擠壓地圖 */
+    /* 壓低遊玩區高度，留出充足垂直空間給下方的地圖藍圖 */
     #play-area {
         width: 100%;
-        height: 260px; /* 👑 從原本的 380px 大幅降到 260px，給下方留出生路 */
+        height: 260px; 
         min-height: 260px;
         padding: 10px;
-        gap: 8px; /* 縮小小格子之間的間距 */
+        gap: 8px;
     }
 
-    /* 3. 放下方的藍圖區：讓它自動吃掉剩餘的所有垂直空間 */
+    /* 藍圖地圖區自動吃掉剩下所有的垂直畫面，兩者絕不重疊 */
     #construction-yard {
         width: 100%;
-        flex: 1; /* 👑 關鍵：自動填滿剩下的空間，絕對不會再被疊加 */
-        min-height: 0; /* 允許隨螢幕高度縮小 */
-        border: 2px solid #34d399;
-        display: flex;
-        flex-direction: column;
+        flex: 1; 
+        min-height: 0; 
+        border: 2px solid var(--accent-emerald);
     }
 
-    /* 4. 確保內部的等角網格 wrapper 在地圖範圍內乖乖縮放 */
     #iso-canvas-wrapper {
         flex: 1;
         min-height: 0;
     }
 
-    /* 5. 稍微縮小格子內形狀/文字的 Padding，讓它在 260px 的有限高度內完美置中 */
-    .shape-box {
-        padding: 4px; 
-    }
-    .shape-box svg {
-        max-width: 75%; /* 防止形狀撐破小格子 */
-        max-height: 75%;
-    }
-    
-    /* 數字模式字型微調，配合縮小的格子 */
-    .num-btn {
-        font-size: 38px !important;
-    }
-    .seq-btn {
-        font-size: 42px !important;
-    }
+    /* 適度縮小形狀與巨型字體，適應縮小的九宮格高度 */
+    .shape-box { padding: 4px; }
+    .shape-box svg { max-width: 75%; max-height: 75%; }
+    .num-btn { font-size: 38px !important; }
+    .seq-btn { font-size: 42px !important; }
 }
 
-/* 2. 當平板是【橫向拿持 Landscape】（通常寬度在 1024px ~ 1366px 之間） */
+/* 2. 【橫向拿持 Landscape】模式：維持完美的左右黃金分割比例 */
 @media (max-width: 1366px) and (orientation: landscape) {
     #main-container {
-        flex-direction: row; /* 保持左右並排 */
+        flex-direction: row; 
         padding: 12px 20px;
         gap: 16px;
     }
 
-    /* 左側遊玩區：微調寬度比例，在橫向平板上既好點擊又不佔空間 */
     #play-area {
         width: 42%;
-        height: auto; /* 彈性拉伸 */
+        height: auto; 
         padding: 12px;
     }
 
-    /* 右側藍圖區：放大比例，完美呈現插畫 */
     #construction-yard {
         width: 56%;
-        height: auto; /* 彈性拉伸 */
+        height: auto; 
     }
 
-    /* 在 @media (max-width: 1024px) and (orientation: portrait) 內部微調 */
-    .shape-box, .num-btn, .seq-btn {
-        font-size: 48px; /* 平板直向時稍微收斂，但依然是巨型 */
+    /* 橫向模式專屬巨型數字尺寸微調 */
+    .num-btn { font-size: 52px !important; }
+    .seq-btn { font-size: 60px !important; }
+    
+    #game-instruction {
+        font-size: 24px; 
     }
-    .seq-btn {
-        font-size: 56px !important;
-    }
-
-    /* 在 @media (max-width: 1366px) and (orientation: landscape) 內部微調 */
-    .shape-box, .num-btn, .seq-btn {
-        font-size: 52px; /* 平板橫向時的巨型尺寸 */
-    }
-    .seq-btn {
-        font-size: 60px !important;
-    }
-        
-        #game-instruction {
-            font-size: 26px; /* 避免頂部標題在平板橫向時塞不下 */
-        }
-    }
+}
