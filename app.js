@@ -1,9 +1,9 @@
 import { 
-    GALLERY_IMAGES, 
-    DYNAMIC_THEMES, 
+    GALLERY_IMAGES,
+    DYNAMIC_THEMES,
     SHAPE_TEMPLATES, 
-    COLOR_PALETTE, 
-    SHAPE_TYPES 
+    COLOR_PALETTE,
+    SHAPE_TYPES
 } from './storyData.js';
 
 // === 狀態管理 ===
