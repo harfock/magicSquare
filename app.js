@@ -32,7 +32,7 @@ const TOTAL_ROUNDS = 25;
 // === 🎵 聽覺升級：泡泡啵啵聲音效模組 ===
 // 使用 Audio 陣列做 Pool 可以支援高頻率連續點擊正確答案時不卡頓、重疊播放
 const BUBBLE_SOUND_URL = './soundreality-bubble-pop-424583.mp3'; 
-const audioPool = Array.from({ length: 5 }, () => new Audio(BUBBBLE_SOUND_URL));
+const audioPool = Array.from({ length: 5 }, () => new Audio(BUBBLE_SOUND_URL));
 let poolIndex = 0;
 
 function playPlinkSound() {
