@@ -114,7 +114,7 @@ body {
 }
 
 /* ==========================================================================
-   🎮 主遊戲核心佈局區域 (大螢幕基礎預設)
+   🎮 主遊戲核心佈局區域
    ========================================================================== */
 #main-container {
     flex: 1;
@@ -217,7 +217,6 @@ body {
     overflow: hidden;
 }
 
-/* 👑 清除所有截斷與長度包袱，標題文字可 100% 自然延伸或換行 */
 #yard-title {
     background: rgba(15, 23, 42, 0.85);
     padding: 12px 20px;
@@ -241,13 +240,14 @@ body {
     height: 100%;
 }
 
+/* 👑 核心修正：將網格重構為 5欄 x 5列 (共 25 區) */
 #iso-grid {
     position: absolute;
     width: 100%;
     height: 100%;
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    grid-template-rows: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr); /* 5欄 */
+    grid-template-rows: repeat(5, 1fr);    /* 5列 */
 }
 
 .grid-tile {
@@ -334,55 +334,52 @@ body {
 
 
 /* ==========================================================================
-   📱 螢幕方向絕對精準自適應（完美解決 4:3 平板拉扯、移位穿幫問題）
+   📱 螢幕方向絕對精準自適應（配合 5x5 正方形藍圖全面優化）
    ========================================================================== */
 
-/* ─── 🔄 情況 A：當偵測到螢幕為【橫向 Landscape】強制啟用對稱 50:50 左右佈局 ─── */
+/* ─── 🔄 情況 A：當偵測到螢幕為【橫向 Landscape】─── */
 @media (orientation: landscape) {
     #main-container {
-        flex-direction: row; /* 強制左右並排 */
+        flex-direction: row; 
         align-items: center; 
-        justify-content: center; /* 讓遊玩區與藍圖區在螢幕中央靠攏居中 */
+        justify-content: center; 
         height: calc(100vh - 80px);
         padding: 16px 24px;
-        gap: 32px; /* 增加兩組件間的間距，視覺更寬敞不擁擠 */
+        gap: 36px; /* 稍微放大間距，讓對稱感更好 */
     }
 
-    /* 🧱 左側遊玩區：與右邊平分秋色 */
     #play-area {
-        width: 46%; /* 👑 逼近 50:50 比例 */
-        max-width: 480px; /* 鎖死大螢幕上限 */
+        width: 44%; /* 微調寬度，達成舒適的橫向對稱 */
+        max-width: 440px; 
         height: auto;
         padding: 16px;
     }
 
-    /* 🗺️ 右側藍圖區：限制寬度至 46% 藉此連動縮減高度，完美塞入 4:3 畫面 */
+    /* 🗺️ 右側藍圖區：因為改成 5x5，硬性鎖定 1 / 1 正方形比例！ */
     #construction-yard {
-        width: 46%;           /* 👑 完美與遊玩區達成左右平分對稱 */
-        max-width: 480px;     
-        /* aspect-ratio: 2 / 1;  /* 強制維持 8x4 網格的精準 2:1 黃金比例，絕不拉伸 */
+        width: 44%;           /* 👑 與遊玩區 50:50 完全平分對稱 */
+        max-width: 440px;     
+        aspect-ratio: 1 / 1;  /* 👑 核心：5x5 網格外觀是完美正方形，寬高 1:1 強制鎖定 */
         height: auto;         
-        flex: none;           /* 徹底禁止瀏覽器彈性拉高高度 */
+        flex: none;           /* 徹底拔除高度被動拉伸機制 */
     }
 
-    /* 橫向模式下字體與圖標清晰度優化 */
     .num-btn { font-size: 44px !important; }
     .seq-btn { font-size: 52px !important; }
     #game-instruction { font-size: 26px; }
 }
 
-/* ─── 🔄 情況 B：當偵測到螢幕為【直向 Portrait】強制啟用精緻上下堆疊佈局 ─── */
+/* ─── 🔄 情況 B：當偵測到螢幕為【直向 Portrait】─── */
 @media (orientation: portrait) {
     #main-container {
-        flex-direction: column; /* 強制上下堆疊 */
+        flex-direction: column; 
         align-items: center; 
         justify-content: flex-start;
         height: calc(100vh - 80px);
         padding: 16px;
-        gap: 20px;
+        gap: 24px;
     }
 
-    /* 遊玩區寬度收攏，左右自然留出空白（Blank Area） */
     #play-area {
         width: 90%; 
         max-width: 440px; 
@@ -391,16 +388,15 @@ body {
         gap: 8px;
     }
 
-    /* 藍圖地圖區在下方維持精緻的等比長方形，防止往上反彈或覆蓋（No Overlap） */
+    /* 藍圖區在直向下方也同樣維持 1:1 正方形，完美收攏 */
     #construction-yard {
         width: 90%; 
         max-width: 440px; 
-        aspect-ratio: 2 / 1; /* 直向也維持完美的 2:1 長方形幾何 */
+        aspect-ratio: 1 / 1; /* 👑 直向同步鎖定 1:1 正方形 */
         height: auto;
         flex: none; 
     }
 
-    /* 直向模式字體輕微收攏，避免太過擁擠 */
     .num-btn { font-size: 36px !important; }
     .seq-btn { font-size: 42px !important; }
 }
