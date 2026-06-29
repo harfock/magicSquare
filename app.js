@@ -24,6 +24,9 @@ let carouselIndex = 0;
 let infoRotationTimer = null;
 let idleTimer = null;
 
+// 👑 核心優化：定義 25 關為一輪大滿貫
+const TOTAL_ROUNDS = 25;
+
 // === 輔助防退化觸控 ===
 function bindElderTouch(element, callback) {
     element.addEventListener('touchstart', (e) => {
@@ -38,7 +41,8 @@ function bindElderTouch(element, callback) {
 }
 
 function getCurrentImageConfig() {
-    let loops = Math.floor((currentLevel - 1) / 32);
+    // 👑 修正：大滿貫基數從 32 改為 25
+    let loops = Math.floor((currentLevel - 1) / TOTAL_ROUNDS);
     let imgIndex = loops % GALLERY_IMAGES.length;
     return GALLERY_IMAGES[imgIndex];
 }
@@ -50,7 +54,7 @@ function refreshYardBackground() {
 
     let imgConfig = getCurrentImageConfig();
     yard.style.backgroundImage = `url('${imgConfig.url}')`;
-    title.textContent = `${imgConfig.name} (32區平面無縫版)`;
+    title.textContent = `${imgConfig.name}`; // 👑 配合 CSS 釋放標題，不再寫死 32 區字樣
 }
 
 function renderThumbBadges() {
@@ -148,7 +152,9 @@ function createBaseMesh() {
     const grid = document.getElementById('iso-grid');
     if (!grid) return;
     grid.innerHTML = '';
-    for (let i = 0; i < 32; i++) {
+    
+    // 👑 修正：只動態渲染 25 個遮罩格子 (完美對應 5x5 CSS 網格)
+    for (let i = 0; i < TOTAL_ROUNDS; i++) {
         const tile = document.createElement('div');
         tile.className = 'grid-tile';
         tile.id = `tile-${i}`;
@@ -389,7 +395,8 @@ function handleItemClick(element, isTarget, scoreReward) {
 }
 
 function revealCityMask() {
-    let tileIndex = (objectsBuiltCount - 1) % 32; 
+    // 👑 修正：索引從 % 32 改為 % 25
+    let tileIndex = (objectsBuiltCount - 1) % TOTAL_ROUNDS; 
     let targetTile = document.getElementById(`tile-${tileIndex}`);
     
     if (targetTile) { 
@@ -422,8 +429,9 @@ function triggerTransitionModal() {
     let imgConfig = getCurrentImageConfig();
     let themeList = DYNAMIC_THEMES[imgConfig.type] || DYNAMIC_THEMES.CITY;
 
-    if ((currentLevel - 1) % 32 === 0) {
-        let currentLoopCount = (currentLevel - 1) / 32;
+    // 👑 核心修正：大滿貫通關判定從 32 改為 25
+    if ((currentLevel - 1) % TOTAL_ROUNDS === 0) {
+        let currentLoopCount = (currentLevel - 1) / TOTAL_ROUNDS;
         let lastImgConfig = GALLERY_IMAGES[(currentLoopCount - 1) % GALLERY_IMAGES.length];
         
         title.textContent = `🎉 榮耀大滿貫成就達成！`;
@@ -435,7 +443,7 @@ function triggerTransitionModal() {
         continueBtn.style.display = 'block';
         overlay.style.display = 'flex';
     } else {
-        let tileIndex = Math.min((objectsBuiltCount - 1) % 32, themeList.length - 1);
+        let tileIndex = Math.min((objectsBuiltCount - 1) % TOTAL_ROUNDS, themeList.length - 1);
         let latestBuildName = themeList[tileIndex];
         let prevMode = getRoundMode(currentLevel - 1);
 
@@ -478,9 +486,11 @@ if (continueBtn) {
     bindElderTouch(continueBtn, handleModalContinue);
 }
 
-// 啟動遊戲
-createBaseMesh();
-renderThumbBadges();
-initGame();
-startTopBarRotation(); 
-resetIdleTimer();
+// 👑 初始化啟動閉環
+document.addEventListener('DOMContentLoaded', () => {
+    createBaseMesh();
+    renderThumbBadges();
+    initGame();
+    startTopBarRotation(); 
+    resetIdleTimer();
+});
