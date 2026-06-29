@@ -114,22 +114,19 @@ body {
 }
 
 /* ==========================================================================
-   🎮 主遊戲核心佈局區域（電腦桌機預設）
+   🎮 主遊戲核心佈局區域
    ========================================================================== */
 #main-container {
     flex: 1;
     display: flex;
-    justify-content: space-between;
-    align-items: stretch;
     padding: 16px 24px;
     gap: 20px;
     min-height: 0;
 }
 
-/* --- 左側遊玩區 --- */
+/* --- 左側遊玩區基礎設定 --- */
 #play-area {
     display: grid;
-    width: 40%;
     background: var(--panel-bg);
     padding: 16px;
     border-radius: 24px;
@@ -209,9 +206,8 @@ body {
     transform: scale(0.95);
 }
 
-/* --- 右側藍圖故事區 --- */
+/* --- 右側藍圖故事區基礎設定 --- */
 #construction-yard {
-    width: 58%;
     background-size: 100% 100%;
     background-position: center center;
     background-repeat: no-repeat;
@@ -225,6 +221,7 @@ body {
     overflow: hidden;
 }
 
+/* 👑 清除標題長度與排版限制，允許文字完美呈現 */
 #yard-title {
     background: rgba(15, 23, 42, 0.85);
     padding: 10px 20px;
@@ -234,12 +231,17 @@ body {
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     color: var(--accent-emerald);
+    white-space: nowrap; /* 確保長標題不換行 */
+    overflow: visible;   /* 移除截斷 */
+    width: 100%;
 }
 
 #iso-canvas-wrapper {
     flex: 1;
     position: relative;
     min-height: 0;
+    width: 100%;
+    height: 100%;
 }
 
 #iso-grid {
@@ -333,80 +335,67 @@ body {
 }
 .flash-hint { animation: flashHint 0.4s ease-in-out 2; }
 
+
 /* ==========================================================================
-   📱 平板電腦（Tablet）防重疊、防拉伸終極完美自適應方案
+   📱 螢幕方向精準自適應（不再依賴 px 寬度，徹底根治翻轉錯誤）
    ========================================================================== */
 
-/* 1. 【縱向拿持 Portrait 模式】核心重構：限制組件寬高，左右安全留白 */
-@media (max-width: 1024px) and (orientation: portrait) {
+/* ─── 🔄 情況 A：當平板是【橫向拿持 Landscape】執行「左右設計」─── */
+@media (orientation: landscape) {
     #main-container {
-        flex-direction: column; 
-        align-items: center; /* 讓上下兩個區塊在畫面水平居中對齊 */
-        justify-content: flex-start;
-        padding: 16px;
-        gap: 20px;
-        height: calc(100vh - 80px); /* 鎖定主容器總高 */
-        overflow-y: auto; /* 若極端小螢幕允許滾動，絕不重疊 */
+        flex-direction: row; /* 👑 絕對左右並排 */
+        align-items: center; 
+        justify-content: space-between;
+        height: calc(100vh - 80px);
     }
 
-    /* 🧱 遊玩區：限制最大寬度，不再強行撐滿，左右兩側留出 Blank Area */
+    #play-area {
+        width: 35%; /* 給左邊合理的寬度比例 */
+        height: auto;
+    }
+
+    /* 👑 橫向時，解除所有高度與寬度限制，讓藍圖地圖 100% 完全展開 */
+    #construction-yard {
+        width: 62%; 
+        height: 100%; 
+        flex: 1;
+        aspect-ratio: auto; /* 移除直向時的固定比例鎖，全面拉滿螢幕 */
+    }
+
+    .num-btn { font-size: 42px !important; }
+    .seq-btn { font-size: 48px !important; }
+    #game-instruction { font-size: 24px; }
+}
+
+/* ─── 🔄 情況 B：當平板是【直向拿持 Portrait】執行「上下設計」─── */
+@media (orientation: portrait) {
+    #main-container {
+        flex-direction: column; /* 👑 絕對上下堆疊 */
+        align-items: center; 
+        justify-content: flex-start;
+        height: calc(100vh - 80px);
+        padding: 16px;
+        gap: 20px;
+    }
+
+    /* 遊玩區收攏在中央，左右留白 */
     #play-area {
         width: 90%; 
-        max-width: 460px; /* 👑 鎖死寬度，確保格子維持精緻比例 */
+        max-width: 460px; 
         height: auto;
         padding: 12px;
         gap: 8px;
     }
 
-    .shape-box, .num-btn, .seq-btn, .color-btn {
-        aspect-ratio: 1 / 1; /* 👑 嚴格鎖定 1:1 正方形 */
-    }
-
-    /* 🗺️ 藍圖地圖區：移除彈性 flex 撐開，設定精準的固定比例，防止上彈覆蓋 */
+    /* 藍圖地圖區在下方維持精緻的等比長方形，防止把九宮格頂上去 */
     #construction-yard {
         width: 90%; 
-        max-width: 460px; /* 👑 寬度與遊玩區對齊，左右形成完美的整齊留白 */
-        aspect-ratio: 2 / 1; /* 👑 核心：因為是 8x4 的網格，強制設定 2:1 的黃金外觀比例 */
-        height: auto; /* 拒絕 flex 自動延展 */
-        flex: none; /* 徹底斷開高度拉扯機制 */
-        border: 2px solid var(--accent-emerald);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        max-width: 460px; 
+        aspect-ratio: 2 / 1; /* 8x4 網格的完美 2:1 比例 */
+        height: auto;
+        flex: none; 
     }
 
-    #iso-canvas-wrapper {
-        width: 100%;
-        height: 100%;
-    }
-
-    /* 字體微調，確保長輩好閱讀 */
     .num-btn { font-size: 36px !important; }
     .seq-btn { font-size: 42px !important; }
-}
-
-/* 2. 【橫向拿持 Landscape 模式】優化 */
-@media (max-width: 1366px) and (orientation: landscape) {
-    #main-container {
-        flex-direction: row; 
-        padding: 12px 20px;
-        gap: 20px;
-        align-items: center; 
-    }
-
-    #play-area {
-        width: 35%; 
-        padding: 12px;
-        gap: 10px;
-    }
-
-    #construction-yard {
-        width: 62%; 
-        height: 100%; 
-    }
-
-    .num-btn { font-size: 42px !important; }
-    .seq-btn { font-size: 48px !important; }
-    
-    #game-instruction {
-        font-size: 24px; 
-    }
 }
