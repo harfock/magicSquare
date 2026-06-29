@@ -31,15 +31,34 @@ const TOTAL_ROUNDS = 25;
 
 // === 🎵 聽覺升級：泡泡啵啵聲音效模組 ===
 // 使用 Audio 陣列做 Pool 可以支援高頻率連續點擊正確答案時不卡頓、重疊播放
+// === 🎵 聽覺升級：泡泡啵啵聲音效模組 ===
 const BUBBLE_SOUND_URL = './soundreality-bubble-pop-424583.mp3'; 
-const audioPool = Array.from({ length: 5 }, () => new Audio(BUBBLE_SOUND_URL));
+let audioPool = []; // 🚀 初始保持空陣列，避免全域載入時卡死
 let poolIndex = 0;
+let isAudioInitialized = false; // 標記是否已解鎖音效
+
+// 安全初始化音效 Pool 的函式
+function initAudioPool() {
+    if (isAudioInitialized) return;
+    try {
+        // 當使用者產生第一次真實互動時，瀏覽器才會允許建立並加載這 5 個音效物件
+        audioPool = Array.from({ length: 5 }, () => new Audio(BUBBBLE_SOUND_URL));
+        isAudioInitialized = true;
+        console.log("🔊 啵啵音效 Pool 安全初始化成功！");
+    } catch (e) {
+        console.error("音效安全初始化失敗", e);
+    }
+}
 
 function playPlinkSound() {
+    // 雙重保障：萬一觸控事件沒觸發到，點擊正確答案時立刻補初始化
+    if (!isAudioInitialized) initAudioPool();
+    
     try {
+        if (audioPool.length === 0) return;
         const sound = audioPool[poolIndex];
-        sound.currentTime = 0; // 倒帶回最前端，確保立刻發聲
-        sound.play().catch(err => console.log("音效解鎖提示: 需等用戶點擊網頁後生效", err));
+        sound.currentTime = 0; // 倒帶回最前端，確保高頻率連續點擊不卡頓
+        sound.play().catch(err => console.log("音效播放提示: 需等用戶點擊網頁後生效", err));
         poolIndex = (poolIndex + 1) % audioPool.length;
     } catch (e) {
         console.error("音效播放失敗", e);
@@ -749,8 +768,22 @@ function handleModalContinue() {
 }
 
 // === 初始化事件綁定 ===
-window.addEventListener('click', resetIdleTimer);
-window.addEventListener('touchstart', resetIdleTimer);
+
+// 👑 核心優化：使用者第一次與網頁互動的專用處理器
+function handleFirstUserInteraction() {
+    initAudioPool();   // 1. 立即解鎖並載入 5 個音效
+    resetIdleTimer();  // 2. 重設發呆自動提示計時器
+    
+    // 3. 成功解鎖後，立刻功成身退，移除此互動監聽器，避免每次點擊都重複執行
+    window.removeEventListener('click', handleFirstUserInteraction);
+    window.removeEventListener('touchstart', handleFirstUserInteraction);
+}
+
+// 監聽第一次點擊或觸控來解鎖音效
+window.addEventListener('click', handleFirstUserInteraction);
+window.addEventListener('touchstart', handleFirstUserInteraction);
+
+// 滑動事件依然保持純粹重設發呆時間
 window.addEventListener('touchmove', resetIdleTimer);
 
 const galleryPopup = document.getElementById('gallery-popup');
