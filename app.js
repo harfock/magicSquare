@@ -628,7 +628,8 @@ function flashAllCorrectAnswersOnce() {
     if (playArea) {
         playArea.classList.remove('neon-run-hint');
         void playArea.offsetWidth; // 強制瀏覽器重繪以重新觸發 CSS 動畫
-        playArea.add('neon-run-hint');
+        // 👑 修正之處：使用 classList.add 確保 GitHub 部署順暢運行不噴錯
+        playArea.classList.add('neon-run-hint');
         
         // 與內部閃爍同步，在 1.5 秒後徹底將特效 Class 卸載
         setTimeout(() => {
