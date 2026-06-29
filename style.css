@@ -114,7 +114,7 @@ body {
 }
 
 /* ==========================================================================
-   🎮 主遊戲核心佈局區域
+   🎮 主遊戲核心佈局區域（電腦桌機預設）
    ========================================================================== */
 #main-container {
     flex: 1;
@@ -126,7 +126,7 @@ body {
     min-height: 0;
 }
 
-/* --- 左側遊玩區 (Play Area) --- */
+/* --- 左側遊玩區 --- */
 #play-area {
     display: grid;
     width: 40%;
@@ -136,20 +136,20 @@ body {
     border: 2px solid var(--border-light);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    align-content: stretch;
+    align-content: center;
     gap: 12px;
 }
 
-/* 不同遊戲模式下的九宮格/多宮格結構自動適應 */
-.grid-shape-mode { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); }
-.grid-math-mode { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); }
-.grid-color-mode { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); }
-.grid-sequence-mode { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
+/* 遊戲模式網格結構 */
+.grid-shape-mode { grid-template-columns: repeat(4, 1fr); }
+.grid-math-mode { grid-template-columns: repeat(3, 1fr); }
+.grid-color-mode { grid-template-columns: repeat(4, 1fr); }
+.grid-sequence-mode { grid-template-columns: repeat(3, 1fr); }
 
-/* --- 核心按鈕與巨型數字視覺強化 --- */
+/* --- 核心按鈕與巨型數字視覺 --- */
 .shape-box, .num-btn, .seq-btn, .color-btn {
     width: 100%;
-    height: 100%;
+    aspect-ratio: 1 / 1; /* 強制保持 1:1 正方形 */
     border-radius: 16px;
     cursor: pointer;
     transition: all 0.15s ease-in-out;
@@ -167,7 +167,7 @@ body {
     background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
     border: 2px solid var(--border-light);
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    font-size: 56px; /* 👑 巨型數字優化：佔滿格子約 70% 的高度 */
+    font-size: 56px; 
     font-weight: 900;
     color: #FFFFFF;
 }
@@ -186,17 +186,15 @@ body {
 .seq-btn {
     background: linear-gradient(135deg, #1e3a8a, #0d9488) !important;
     border: 3px solid var(--accent-emerald) !important;
-    font-size: 64px !important; /* 👑 序列模式巨型數字 */
+    font-size: 64px !important; 
     text-shadow: 0 3px 8px rgba(0,0,0,0.6);
 }
 
-/* 按鈕互動特效 */
 .shape-box:active, .num-btn:active, .seq-btn:active, .color-btn:active {
     transform: scale(0.92);
     filter: brightness(1.2);
 }
 
-/* 狀態動畫類別 */
 .eliminated {
     transform: scale(0);
     opacity: 0;
@@ -211,7 +209,7 @@ body {
     transform: scale(0.95);
 }
 
-/* --- 右側藍圖故事區 (Construction Yard) --- */
+/* --- 右側藍圖故事區 --- */
 #construction-yard {
     width: 58%;
     background-size: 100% 100%;
@@ -272,7 +270,7 @@ body {
 }
 
 /* ==========================================================================
-   🌟 特效、彈窗與燈箱系統 (Modals & Popups)
+   🌟 特效、彈窗與燈箱系統
    ========================================================================== */
 #modal-overlay {
     position: fixed;
@@ -320,7 +318,7 @@ body {
 .gallery-tip { font-size: 14px; color: #94a3b8; margin-top: 6px; }
 
 /* ==========================================================================
-   🧭 動畫定義 (Animations)
+   🧭 動畫定義
    ========================================================================== */
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
@@ -335,49 +333,39 @@ body {
 }
 .flash-hint { animation: flashHint 0.4s ease-in-out 2; }
 
-@keyframes justUnlockedGlow {
-    0% { border-color: var(--accent-emerald); box-shadow: 0 0 5px rgba(52,211,153,0.3); }
-    50% { border-color: #6ee7b7; box-shadow: 0 0 25px rgba(110,231,183,0.8); }
-    100% { border-color: var(--accent-emerald); box-shadow: 0 12px 36px rgba(0,0,0,0.6); }
-}
-.just-unlocked { animation: justUnlockedGlow 1s ease-in-out 1; }
-
-.fade-in-effect { animation: fadeIn 0.4s ease-out forwards; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
-
-.blink-active { animation: barBlink 0.5s ease-out 1; }
-@keyframes barBlink { 0% { opacity: 0.7; } 100% { opacity: 1; } }
-
 /* ==========================================================================
-   📱 平板電腦（Tablet）防重疊響應式優化
+   📱 平板電腦（Tablet）專屬精準適應
    ========================================================================== */
 
-/* 1. 【縱向拿持 Portrait】模式：改為上下並排，鎖死高度防重疊 */
+/* 1. 【縱向拿持 Portrait】模式：限制寬度，左右留白，杜絕往下擠壓地圖 */
 @media (max-width: 1024px) and (orientation: portrait) {
     #main-container {
         flex-direction: column; 
-        align-items: stretch;
+        align-items: center; /* 👑 讓左右收縮的遊玩區在畫面水平正中央居中 */
         padding: 10px 16px;
-        gap: 12px;
-        height: calc(100vh - 100px); /* 扣除頂部導覽列，鎖定視窗總高 */
+        gap: 16px;
+        height: calc(100vh - 100px); 
         min-height: 0;
     }
 
-    /* 壓低遊玩區高度，留出充足垂直空間給下方的地圖藍圖 */
     #play-area {
-        width: 100%;
-        height: 260px; 
-        min-height: 260px;
-        padding: 10px;
+        width: 85%; /* 👑 拒絕 100% 撐滿！主動縮小到 85%，左右兩側自然產生空白 */
+        max-width: 520px; /* 👑 鎖定最大寬度，這樣格子在橫向就不會無限變寬 */
+        height: auto;
+        padding: 12px;
         gap: 8px;
     }
 
-    /* 藍圖地圖區自動吃掉剩下所有的垂直畫面，兩者絕不重疊 */
+    .shape-box, .num-btn, .seq-btn, .color-btn {
+        aspect-ratio: 1 / 1; /* 👑 強制在直向也保持 1:1 正方形，格子絕不變形 */
+    }
+
+    /* 下方都市藍圖區：徹底解放，佔滿剩餘的所有垂直空間，永不被覆蓋 */
     #construction-yard {
         width: 100%;
         flex: 1; 
         min-height: 0; 
-        border: 2px solid var(--accent-emerald);
+        margin-top: 4px;
     }
 
     #iso-canvas-wrapper {
@@ -385,35 +373,33 @@ body {
         min-height: 0;
     }
 
-    /* 適度縮小形狀與巨型字體，適應縮小的九宮格高度 */
-    .shape-box { padding: 4px; }
-    .shape-box svg { max-width: 75%; max-height: 75%; }
-    .num-btn { font-size: 38px !important; }
-    .seq-btn { font-size: 42px !important; }
+    /* 直向平板數字大小最佳化 */
+    .num-btn { font-size: 42px !important; }
+    .seq-btn { font-size: 48px !important; }
 }
 
-/* 2. 【橫向拿持 Landscape】模式：維持完美的左右黃金分割比例 */
+/* 2. 【橫向拿持 Landscape】模式：完美的左右分割比例 */
 @media (max-width: 1366px) and (orientation: landscape) {
     #main-container {
         flex-direction: row; 
         padding: 12px 20px;
-        gap: 16px;
+        gap: 20px;
+        align-items: center; 
     }
 
     #play-area {
-        width: 42%;
-        height: auto; 
+        width: 35%; 
         padding: 12px;
+        gap: 10px;
     }
 
     #construction-yard {
-        width: 56%;
-        height: auto; 
+        width: 62%; 
+        height: 100%; 
     }
 
-    /* 橫向模式專屬巨型數字尺寸微調 */
-    .num-btn { font-size: 52px !important; }
-    .seq-btn { font-size: 60px !important; }
+    .num-btn { font-size: 42px !important; }
+    .seq-btn { font-size: 48px !important; }
     
     #game-instruction {
         font-size: 24px; 
