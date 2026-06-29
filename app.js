@@ -6,7 +6,7 @@ import {
     SHAPE_TYPES 
 } from './storyData.js';
 
-// === 狀態管理（封裝在模組內，外部無法任意污染） ===
+// === 狀態管理 ===
 let currentTargetShape = '';
 let currentTargetColor = '';
 let mathAnswer = 0;
@@ -23,11 +23,116 @@ let carouselIndex = 0;
 let infoRotationTimer = null;
 let idleTimer = null;
 
-// 👑 全局發呆自動提示專用計時器 (取代舊有單一模式計時)
+// 全局發呆自動提示專用計時器
 let globalIdleHintTimer = null;
 
-// 👑 核心優化：定義 25 關為一輪大滿貫
+// 核心定義：25 關為一輪大滿貫
 const TOTAL_ROUNDS = 25;
+
+// === Canvas 3D 氣泡物理特效引擎 ===
+let bubbleCanvas = null;
+let bubbleCtx = null;
+let explosionParticles = [];
+let animationFrameId = null;
+
+function initBubbleCanvas() {
+    bubbleCanvas = document.getElementById('bubble-canvas');
+    if (!bubbleCanvas) return;
+    bubbleCtx = bubbleCanvas.getContext('2d');
+    resizeBubbleCanvas();
+    window.addEventListener('resize', resizeBubbleCanvas);
+}
+
+function resizeBubbleCanvas() {
+    if (bubbleCanvas) {
+        bubbleCanvas.width = window.innerWidth;
+        bubbleCanvas.height = window.innerHeight;
+    }
+}
+
+// 核心觸發：大氣泡在點擊中心碎裂成多個帶有 3D 光影的小氣泡
+function createExplosion(x, y) {
+    if (!bubbleCtx) return;
+    
+    const count = 12; // 碎裂的小氣泡數量
+    for (let i = 0; i < count; i++) {
+        // 向四周隨機擴散的角度與速度
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 4 + 2; 
+        
+        explosionParticles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 1.5, // 額外給予向上的浮力微調
+            size: Math.random() * 8 + 4,        // 隨機大小
+            life: 1.0,                         // 生命值/透明度
+            decay: Math.random() * 0.02 + 0.015, // 衰減速度
+            drift: Math.random() * 2 - 1       // 左右微幅搖擺率
+        });
+    }
+    
+    // 啟動動畫循環（如果尚未啟動）
+    if (!animationFrameId) {
+        updateExplosionAnimation();
+    }
+}
+
+function updateExplosionAnimation() {
+    if (!bubbleCtx) return;
+    
+    bubbleCtx.clearRect(0, 0, bubbleCanvas.width, bubbleCanvas.height);
+    
+    // 渲染並更新所有活著的粒子
+    explosionParticles = explosionParticles.filter(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy -= 0.04; // 模擬水底氣泡隨時間向上加速的浮力
+        p.x += Math.sin(p.y * 0.05) * p.drift * 0.2; // 蛇行搖擺
+        p.life -= p.decay;
+        
+        if (p.life <= 0 || p.size <= 0) return false;
+        
+        // 繪製 3D 立體氣泡主體
+        bubbleCtx.beginPath();
+        bubbleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        
+        // 使用放射狀漸層營造 3D 玻璃球透光感
+        let gradient = bubbleCtx.createRadialGradient(
+            p.x - p.size * 0.3, p.y - p.size * 0.3, p.size * 0.1,
+            p.x, p.y, p.size
+        );
+        gradient.addColorStop(0, `rgba(255, 255, 255, ${p.life * 0.9})`);
+        gradient.addColorStop(0.4, `rgba(255, 255, 255, ${p.life * 0.4})`);
+        gradient.addColorStop(0.9, `rgba(200, 230, 255, ${p.life * 0.3})`);
+        gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
+        
+        bubbleCtx.fillStyle = gradient;
+        bubbleCtx.fill();
+        
+        // 加上邊緣發光線條
+        bubbleCtx.beginPath();
+        bubbleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        bubbleCtx.strokeStyle = `rgba(255, 255, 255, ${p.life * 0.5})`;
+        bubbleCtx.lineWidth = 1;
+        bubbleCtx.stroke();
+        
+        // 加上核心 3D 高光小點 (Specular Highlight)
+        bubbleCtx.beginPath();
+        bubbleCtx.arc(p.x - p.size * 0.35, p.y - p.size * 0.35, p.size * 0.18, 0, Math.PI * 2);
+        bubbleCtx.fillStyle = `rgba(255, 255, 255, ${p.life * 0.8})`;
+        bubbleCtx.fill();
+        
+        return true;
+    });
+    
+    if (explosionParticles.length > 0) {
+        animationFrameId = requestAnimationFrame(updateExplosionAnimation);
+    } else {
+        animationFrameId = null;
+        bubbleCtx.clearRect(0, 0, bubbleCanvas.width, bubbleCanvas.height);
+    }
+}
 
 // === 輔助防退化觸控 ===
 function bindElderTouch(element, callback) {
@@ -139,7 +244,6 @@ function updateCarouselDisplay() {
 }
 
 function resetIdleTimer() {
-    // 1. 原本的霓虹螢幕保護程式計時
     const neonContainer = document.getElementById('neon-trail-container');
     if (neonContainer && neonContainer.classList.contains('active')) {
         neonContainer.classList.remove('active');
@@ -149,7 +253,6 @@ function resetIdleTimer() {
         if (neonContainer) neonContainer.classList.add('active');
     }, 5000);
 
-    // 👑 2. 核心修正：只要玩家觸控或點擊螢幕，立刻重設「5秒全局發呆自動提示」計時器
     startGlobalIdleHintTimeout();
 }
 
@@ -177,7 +280,6 @@ function getRoundMode(level) {
 }
 
 function initGame() {
-    // 👑 初始化新關卡時，徹底清空發呆提示計時器
     if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer);
 
     const playArea = document.getElementById('play-area');
@@ -212,7 +314,6 @@ function initGame() {
         spawnPool.forEach((item) => {
             const box = document.createElement('div');
             box.className = 'shape-box';
-            // 👑 標記正確答案以便發呆提示搜尋
             if (item.isTarget) box.setAttribute('data-target-hint', 'true');
             box.innerHTML = SHAPE_TEMPLATES[item.type];
             bindElderTouch(box, () => handleItemClick(box, item.isTarget, 150));
@@ -263,7 +364,6 @@ function initGame() {
             const btn = document.createElement('div');
             btn.className = 'num-btn';
             btn.textContent = val;
-            // 👑 標記正確答案以便發呆提示搜尋
             if (val === mathAnswer) btn.setAttribute('data-target-hint', 'true'); 
 
             bindElderTouch(btn, () => handleMathGridSelection(btn, val === mathAnswer));
@@ -295,7 +395,6 @@ function initGame() {
         spawnPool.forEach((item) => {
             const btn = document.createElement('div');
             btn.className = 'color-btn';
-            // 👑 標記正確答案以便發呆提示搜尋
             if (item.isTarget) btn.setAttribute('data-target-hint', 'true');
             btn.style.backgroundColor = item.color; 
             bindElderTouch(btn, () => handleItemClick(btn, item.isTarget, 200)); 
@@ -321,15 +420,18 @@ function initGame() {
             const seqBtn = document.createElement('div');
             seqBtn.className = 'seq-btn';
             seqBtn.textContent = num;
-            // 👑 動態屬性：記錄其數值，方便發呆時找出當前「最小值」按鈕
             seqBtn.setAttribute('data-val', num);
 
             bindElderTouch(seqBtn, () => {
                 let correctNextValue = sortedNumbers[nextExpectedIndex];
                 if (num === correctNextValue) {
-                    seqBtn.classList.remove('flash-hint'); // 若正在閃爍則移除
+                    // 👑 點擊正確：獲取當前按鈕中心點，觸發 3D 氣泡碎裂
+                    const rect = seqBtn.getBoundingClientRect();
+                    createExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+                    seqBtn.classList.remove('flash-hint'); 
                     seqBtn.classList.add('completed');
-                    seqBtn.removeAttribute('data-val'); // 已完成，移除數值標記
+                    seqBtn.removeAttribute('data-val'); 
                     nextExpectedIndex++;
                     gameScore += 50;
 
@@ -337,7 +439,6 @@ function initGame() {
                         gameScore += 100; 
                         processRoundSuccess();
                     } else {
-                        // 👑 答對其中一步，重新起算下一個數字的 5秒發呆計時
                         startGlobalIdleHintTimeout();
                     }
                 } else {
@@ -350,15 +451,44 @@ function initGame() {
         });
     }
 
-    // 👑 任何模式初始化完畢，立刻開啟「5秒全局發呆自動提示機制」
     startGlobalIdleHintTimeout();
     updateCarouselDisplay();
+}
+
+function handleItemClick(element, isTarget, scoreReward) {
+    if (element.classList.contains('eliminated') || element.classList.contains('shake')) return;
+
+    if (isTarget) {
+        if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer);
+        
+        // 👑 點擊正確：獲取元件中心點，觸發 3D 氣泡碎裂
+        const rect = element.getBoundingClientRect();
+        createExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+        element.classList.remove('flash-hint');
+        element.classList.add('eliminated');
+        clickedCorrectCount++;
+        gameScore += scoreReward;
+
+        if (clickedCorrectCount === 3) { 
+            processRoundSuccess(); 
+        } else {
+            startGlobalIdleHintTimeout();
+        }
+    } else {
+        element.classList.add('shake');
+        setTimeout(() => element.classList.remove('shake'), 350);
+    }
 }
 
 function handleMathGridSelection(clickedBtn, isCorrect) {
     if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer); 
 
     if (isCorrect) {
+        // 👑 點擊正確：獲取元件中心點，觸發 3D 氣泡碎裂
+        const rect = clickedBtn.getBoundingClientRect();
+        createExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
         gameScore += 250;
         document.getElementById('target-display').textContent = mathAnswer;
         processRoundSuccess();
@@ -368,32 +498,28 @@ function handleMathGridSelection(clickedBtn, isCorrect) {
         setTimeout(() => clickedBtn.classList.remove('shake'), 350);
 
         if (mathWrongCount >= 3) {
-            flashAllCorrectAnswersOnce(); // 錯三次直接高亮
+            flashAllCorrectAnswersOnce(); 
         } else {
-            startGlobalIdleHintTimeout(); // 未滿三次，重啟5秒發呆提示
+            startGlobalIdleHintTimeout(); 
         }
     }
 }
 
-// 👑 全局核心優化：1秒內快速閃爍5次正確目標（適應全模式）
 function flashAllCorrectAnswersOnce() {
     let mode = getRoundMode(currentLevel);
     let targets = [];
 
     if (mode === 'SEQUENCE') {
-        // 數列模式：找出目前還沒被點選的按鈕中，數值最小的那一個
         let remainingBtns = Array.from(document.querySelectorAll('.seq-btn[data-val]'));
         if (remainingBtns.length > 0) {
             remainingBtns.sort((a, b) => parseInt(a.getAttribute('data-val')) - parseInt(b.getAttribute('data-val')));
-            targets = [remainingBtns[0]]; // 只提示當前該點的那一個
+            targets = [remainingBtns[0]]; 
         }
     } else {
-        // 圖形、顏色、心算模式：直接撈取尚未被消除且帶有 data-target-hint 的按鈕
         targets = Array.from(document.querySelectorAll('[data-target-hint="true"]'))
                        .filter(el => !el.classList.contains('eliminated'));
     }
 
-    // 執行同步高亮閃爍（配合 CSS 1秒閃爍5次）
     targets.forEach(targetBtn => {
         targetBtn.classList.remove('flash-hint');
         void targetBtn.offsetWidth; 
@@ -404,38 +530,14 @@ function flashAllCorrectAnswersOnce() {
         }, 1000);
     });
 
-    // 👑 閃爍完成後，若該關卡尚未結束，繼續維持 5 秒發呆循環監聽
     startGlobalIdleHintTimeout();
 }
 
-// 👑 核心啟動器：閒置 5 秒自動觸發提示
 function startGlobalIdleHintTimeout() {
     if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer);
     globalIdleHintTimer = setTimeout(() => {
         flashAllCorrectAnswersOnce();
-    }, 5000); // 👑 正式改為 5000 毫秒 (5秒)
-}
-
-function handleItemClick(element, isTarget, scoreReward) {
-    if (element.classList.contains('eliminated') || element.classList.contains('shake')) return;
-
-    if (isTarget) {
-        if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer);
-        element.classList.remove('flash-hint');
-        element.classList.add('eliminated');
-        clickedCorrectCount++;
-        gameScore += scoreReward;
-
-        if (clickedCorrectCount === 3) { 
-            processRoundSuccess(); 
-        } else {
-            // 👑 找到了其中一個目標，重新起算其餘目標的 5秒發呆提示
-            startGlobalIdleHintTimeout();
-        }
-    } else {
-        element.classList.add('shake');
-        setTimeout(() => element.classList.remove('shake'), 350);
-    }
+    }, 5000); 
 }
 
 function revealCityMask() {
@@ -455,7 +557,7 @@ function revealCityMask() {
 }
 
 function processRoundSuccess() {
-    if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer); // 過關立刻切斷計時
+    if (globalIdleHintTimer) clearTimeout(globalIdleHintTimer); 
     objectsBuiltCount++; 
     currentLevel++;
     revealCityMask(); 
@@ -518,7 +620,6 @@ window.addEventListener('click', resetIdleTimer);
 window.addEventListener('touchstart', resetIdleTimer);
 window.addEventListener('touchmove', resetIdleTimer);
 
-// 燈箱與按鈕的綁定
 const galleryPopup = document.getElementById('gallery-popup');
 if (galleryPopup) {
     galleryPopup.addEventListener('click', closeGalleryPopup);
@@ -528,8 +629,9 @@ if (continueBtn) {
     bindElderTouch(continueBtn, handleModalContinue);
 }
 
-// 啟動遊戲與環境閉環
+// 啟動與環境初始化
 document.addEventListener('DOMContentLoaded', () => {
+    initBubbleCanvas(); // 👑 初始化氣泡畫布
     createBaseMesh();
     renderThumbBadges();
     initGame();
