@@ -3,21 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>形狀、心算與色彩幻獸萌寵探索之旅</title>
+    <title>禪意深海靜心之旅</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
     <canvas id="bubble-canvas"></canvas>
+    
     <svg style="position: absolute; width: 0; height: 0;">
         <defs>
-            <filter id="3d-lighting" x="-10%" y="-10%" width="120%" height="120%">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
-                <feSpecularLighting in="blur" surfaceScale="6" specularConstant="1.3" specularExponent="16" lighting-color="#ffffff" result="specular">
-                    <feDistantLight azimuth="135" elevation="52" />
+            <radialGradient id="crystal-yellow-gradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                <stop offset="0%" stop-color="#ffffff" />
+                <stop offset="15%" stop-color="#fffbeb" />
+                <stop offset="55%" stop-color="#f59e0b" />
+                <stop offset="85%" stop-color="#b45309" />
+                <stop offset="100%" stop-color="#78350f" />
+            </radialGradient>
+
+            <filter id="3d-pyramid-filter" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blurMap" />
+                <feSpecularLighting in="blurMap" surfaceScale="16" specularConstant="2.0" specularExponent="28" lighting-color="#ffffff" result="specularLight">
+                    <feDistantLight azimuth="135" elevation="45" />
                 </feSpecularLighting>
-                <feComposite in="specular" in2="SourceAlpha" operator="in" result="specularOut" />
-                <feComposite in="SourceGraphic" in2="specularOut" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
+                <feConvolveMatrix order="3,3" kernelMatrix="1  1  1  1 -8  1  1  1  1" divisor="1" in="SourceGraphic" result="edges"/>
+                <feComposite in="specularLight" in2="SourceAlpha" operator="in" result="pureLight" />
+                <feComposite in="SourceGraphic" in2="pureLight" operator="arithmetic" k1="0.1" k2="1.0" k3="1.2" k4="0" result="litGraphic" />
+                <feComposite in="litGraphic" in2="edges" operator="over" />
             </filter>
         </defs>
     </svg>
@@ -26,14 +38,14 @@
 
     <div id="target-bar">
         <div id="target-left-side">
-            <h1 id="game-instruction">載入中...</h1>
+            <h1 id="game-instruction">靜心載入中...</h1>
             <div id="target-display"></div>
         </div>
         
         <div id="target-right-side">
             <div id="top-badge-container"></div>
             <div id="dashboard-carousel">
-                <span id="carousel-text">載入中...</span>
+                <span id="carousel-text">正在引難思緒...</span>
             </div>
         </div>
     </div>
@@ -41,30 +53,20 @@
     <div id="main-container">
         <div id="play-area" class="grid-shape-mode"></div>
         
-        <div id="construction-yard">
-            <div id="yard-title">探索藍圖</div>
-            <div id="iso-canvas-wrapper">
-                <div id="iso-grid"></div>
-            </div>
+        <div id="progress-container">
+            <div id="progress-bar"></div>
         </div>
     </div>
 
     <div id="modal-overlay">
         <div class="modal-box">
-            <h2 id="modal-title">區域開發完成！</h2>
-            <p id="modal-desc">已成功驅散迷霧</p>
-            <button id="modal-continue-btn">繼續下一輪挑戰</button>
+            <h2 id="modal-title">思緒已澄清</h2>
+            <p id="modal-desc">成功突破當前靜心維度</p>
+            <button id="modal-continue-btn">開啟下一階段修行</button>
         </div>
     </div>
 
-    <div id="gallery-popup">
-        <div class="gallery-content">
-            <img id="gallery-img" src="" alt="解鎖地圖">
-            <div id="gallery-text-title" class="gallery-title">解鎖地圖</div>
-            <div class="gallery-tip">( 點選畫面的任意地方即可關閉此視窗 )</div>
-        </div>
-    </div>
-
-    <script type="module" src="./app.js"></script>
+    <script src="./storyData.js" type="module"></script>
+    <script src="./app.js" type="module"></script>
 </body>
 </html>
